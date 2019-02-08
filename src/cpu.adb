@@ -1,3 +1,5 @@
+with Interfaces; use Interfaces;
+
 package body CPU is
    function "+" (R : Reg8_T) return Ptr8_T is
    begin
@@ -108,4 +110,34 @@ package body CPU is
    begin
       CPU.Last_Branch_Taken := B;
    end Set_Last_Branch_Taken;
+
+   function Read_Next (CPU : in out CPU_T) return Uint8 is
+      Result : Uint8;
+   begin
+      Result := Mem (CPU, Get_PC (CPU));
+      Increment_PC (CPU);
+      return Result;
+   end Read_Next;
+
+   function Read_Next (CPU : in out CPU_T) return Uint16 is
+      Low : Uint8;
+      High : Uint8;
+      Result : Uint16;
+   begin
+      Low := Mem (CPU, Get_PC (CPU));
+      Increment_PC (CPU);
+      High := Mem (CPU, Get_PC (CPU));
+      Increment_PC (CPU);
+
+      Result := Uint16 (Shift_Left (Unsigned_16 (High), 8)
+                        or Unsigned_16 (Low));
+
+      return Result;
+   end Read_Next;
+
+   function Read_Next (CPU : in out CPU_T) return Addr16 is
+      Next : Uint16 renames Read_Next (CPU);
+   begin
+      return Addr16 (Next);
+   end Read_Next;
 end CPU;
