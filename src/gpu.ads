@@ -30,6 +30,9 @@ package GPU is
    --  Size in byte of one pixel
    One_Pixel_Size : constant := 2;
 
+   type Signed_Tile_Pattern is range -128 .. 127;
+   type Unsigned_Tile_Pattern is range 0 .. 255;
+
    --  Given the X coord in grid and Y coord in grid, return the address of
    --  the first pixel of this grid
    function Get_Start_Address
@@ -46,4 +49,8 @@ package GPU is
        Y : Tile_Pixel_Y;
        Tile_Addr : Addr16)
       return Pixel_Color;
+
+   --  Return Address of the tile data for the given pattern
+   function Get_Tile_Address (N : Signed_Tile_Pattern) return Tile_Data_0;
+   function Get_Tile_Address (N : Unsigned_Tile_Pattern) return Tile_Data_1;
 end GPU;

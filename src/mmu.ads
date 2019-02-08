@@ -10,6 +10,18 @@ package MMU is
       Memory : Memory_Array;
    end Memory_T;
 
+   --  Background tile map locations
+   subtype BG_Tile_Map_0 is Addr16 range 16#9800# .. 16#9BFF#;
+   subtype BG_Tile_Map_1 is Addr16 range 16#9C00# .. 16#9FFF#;
+
+   --  Tile data (same for background and window) locations
+   subtype Tile_Data_0 is Addr16 range 16#8800# .. 16#97FF#;
+   subtype Tile_Data_1 is Addr16 range 16#8000# .. 16#8FFF#;
+
+   --  Start of tile data is different from 'First
+   Tile_Data_0_Start : constant Tile_Data_0 := 16#9000#;
+   Tile_Data_1_Start : constant Tile_Data_1 := Tile_Data_1'First;
+
 private
    type Memory_Array is array (Addr16) of Uint8;
 end MMU;

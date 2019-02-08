@@ -43,4 +43,17 @@ package body GPU is
             end case;
       end case;
    end Get_Pixel_Color;
+
+   function Get_Tile_Address (N : Signed_Tile_Pattern) return Tile_Data_0 is
+      Address : Integer :=
+         Integer (Tile_Data_0_Start)
+         + (Integer (N) * Tile_Size_X * One_Pixel_Size);
+   begin
+      return Addr16 (Address);
+   end Get_Tile_Address;
+
+   function Get_Tile_Address (N : Unsigned_Tile_Pattern) return Tile_Data_1 is
+   begin
+      return Tile_Data_1_Start + (Addr16 (N) * Tile_Size_X * One_Pixel_Size);
+   end Get_Tile_Address;
 end GPU;
