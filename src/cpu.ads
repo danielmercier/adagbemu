@@ -15,6 +15,9 @@ package CPU is
    function "+" (R : Reg8_T) return Ptr8_T;
    function "+" (R : Reg16_T) return Ptr16_T;
 
+   --  Initialize the given CPU with given memory
+   procedure Init (CPU : out CPU_T; Mem : Memory_T);
+
    --  Registers getters
    function Reg (CPU : CPU_T; R : Reg8_T) return Uint8;
    function Reg (CPU : CPU_T; R : Reg16_T) return Uint16;

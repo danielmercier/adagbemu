@@ -1,5 +1,7 @@
 with HAL; use HAL;
+with MMU; use MMU;
 with CPU; use CPU;
+with GPU; use GPU;
 
 package GB is
    protected type Clock_Waiter_T is
@@ -15,7 +17,13 @@ package GB is
    end Clock_Waiter_T;
 
    type GB_T is limited record
+      Memory : Memory_T;
       CPU : CPU_T;
+
       Main_Clock : Clock_Waiter_T;
+   
+      Screen : Screen_T;
    end record;
+
+   procedure Init (GB : out GB_T);
 end GB;

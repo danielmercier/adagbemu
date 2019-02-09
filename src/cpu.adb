@@ -11,6 +11,11 @@ package body CPU is
       return Ptr16_T (R);
    end "+";
 
+   procedure Init (CPU : out CPU_T; Mem : Memory_T) is
+   begin
+      CPU.Memory := Mem;
+   end Init;
+
    function Reg (CPU : CPU_T; R : Reg8_T) return Uint8 is
    begin
       return CPU.Registers.Regs8 (R);

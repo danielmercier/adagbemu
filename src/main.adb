@@ -3,8 +3,10 @@ with Display.Basic; use Display.Basic;
 with Ada.Real_Time; use Ada.Real_Time;
 --with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
+with MMU; use MMU;
+with CPU; use CPU;
+with GPU; use GPU;
 with GB; use GB;
-with Loader; use Loader;
 
 procedure Main is
    Width       : constant := 240.0;
@@ -19,8 +21,12 @@ procedure Main is
    --  reference to the graphical canvas associated with the application window
    Canvas : Canvas_Id;
 
+   Pixel_Size : constant := 2;
+
    GB : GB_T;
 begin
+   Init (GB);
+
    Window :=
      Create_Window
        (Width  => Integer (Width),
@@ -28,11 +34,30 @@ begin
         Name   => "GameBoy Emulator");
    Canvas := Get_Canvas (Window);
 
-   Load ("mem/mem.dump", GB, 16#8000#);
-
    Next := Clock + Period;
 
    while not Is_Killed loop
+      for X in GB.Screen'Range (1) loop
+         for Y in GB.Screen'Range (2) loop
+            declare
+               Color : constant Color_T := GB.Screen (X, Y);
+               RGBA : constant RGBA_T :=
+                  (R => Color_Component_T (Color.R),
+                   G => Color_Component_T (Color.G),
+                   B => Color_Component_T (Color.B),
+                   A => Color_Component_T (Color.A));
+            begin
+               Draw_Fill_Rect
+                  (Canvas => Canvas,
+                   Position => (Integer (X) * Pixel_Size,
+                                Integer (Y) * Pixel_Size),
+                   Width => Pixel_Size,
+                   Height => Pixel_Size,
+                   Color => RGBA);
+            end;
+         end loop;
+      end loop;
+
       Swap_Buffers (Window);
 
       delay until Next;
