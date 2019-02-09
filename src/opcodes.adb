@@ -1,6 +1,9 @@
+with CPU.Logger; use CPU.Logger;
+
 package body OPCodes is
    procedure Unimplemented (CPU : CPU_T) is
    begin
+      Log_Not_Implemented (CPU);
       raise Not_Implemented;
    end Unimplemented;
 

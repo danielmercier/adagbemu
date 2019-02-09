@@ -52,6 +52,22 @@ def gen_from_json(procname_prefix, content):
         print("")
     print("########################")
 
+def gen_mnemonic_from_json(content):
+    print("####MNEMONIC####")
+    for x in content:
+        addr = int(x['addr'], base=16)
+        mnemonic = x['mnemonic']
+
+        if 'operand1' in x:
+            mnemonic += ' ' + x['operand1']
+
+        if 'operand2' in x:
+            mnemonic += ', ' + x['operand2']
+
+        print('       16#{:02X}# => To_Unbounded_String ("{}"),'
+                .format(addr, mnemonic))
+    print("################")
+
 content = []
 
 for value in json['unprefixed'].values():
@@ -60,7 +76,7 @@ for value in json['unprefixed'].values():
 content.sort(key=(lambda x: int(x['addr'], base=16)))
 
 gen_from_json("OPCode", content)
-
+gen_mnemonic_from_json(content)
 
 content = []
 
@@ -70,3 +86,4 @@ for value in json['cbprefixed'].values():
 content.sort(key=(lambda x: int(x['addr'], base=16)))
 
 gen_from_json("CB_OPCode", content)
+gen_mnemonic_from_json(content)
