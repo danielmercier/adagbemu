@@ -29,15 +29,26 @@ package MMU is
 
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
 
+   LY_Addr : constant Addr16 := 16#FF44#;
+   SCX_Addr : constant Addr16 := 16#FF43#;
+   SCY_Addr : constant Addr16 := 16#FF42#;
+
    protected type Memory_P is
       function Get (A : Addr16) return Uint8;
       procedure Set (A : Addr16; V : Uint8);
+
+      procedure Increment_LY;
+      procedure Reset_LY;
    private
       Memory : Memory_Array;
    end Memory_P;
 
    type Memory_T is access Memory_P;
 
+   function LCDC (Mem : Memory_T) return LCDC_T;
+   function LY (Mem : Memory_T) return Uint8;
+   function SCX (Mem : Memory_T) return Uint8;
+   function SCY (Mem : Memory_T) return Uint8;
 private
    type Memory_Array is array (Addr16) of Uint8;
 end MMU;
