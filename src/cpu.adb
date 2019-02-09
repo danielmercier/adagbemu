@@ -14,6 +14,15 @@ package body CPU is
    procedure Init (CPU : out CPU_T; Mem : Memory_T) is
    begin
       CPU.Memory := Mem;
+
+      CPU.Registers.Regs16 :=
+         (AF => 16#01B0#,
+          BC => 16#0013#,
+          DE => 16#00D8#,
+          HL => 16#014D#,
+          SP => 16#FFFE#);
+
+      CPU.Program_Counter := 16#0100#;
    end Init;
 
    function Reg (CPU : CPU_T; R : Reg8_T) return Uint8 is
