@@ -133,6 +133,12 @@ package body CPU is
       return Result;
    end Read_Next;
 
+   function Read_Next (CPU : in out CPU_T) return Addr8 is
+      Result : Uint8 renames Read_Next (CPU);
+   begin
+      return Addr8 (Result);
+   end Read_Next;
+
    function Read_Next (CPU : in out CPU_T) return Uint16 is
       Low : Uint8;
       High : Uint8;
