@@ -25,9 +25,19 @@ package body GB is
 
       procedure Will_Wait (Amount : Clock_T) is
       begin
-         Is_Ok := False;
+         if not Never_Wait then
+            Is_Ok := False;
+         end if;
          Waiting_Amount := Amount;
       end Will_Wait;
+
+      procedure Set_Never_Wait (B : Boolean) is
+      begin
+         Never_Wait := B;
+         if B then
+            Is_Ok := True;
+         end if;
+      end Set_Never_Wait;
 
       entry Wait when Is_Ok is
       begin

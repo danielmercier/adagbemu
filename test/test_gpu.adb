@@ -6,6 +6,7 @@ with GB; use GB;
 with MMU; use MMU;
 with CPU; use CPU;
 with GPU; use GPU;
+with GPU.Render; use GPU.Render;
 with Loader; use Loader;
 
 procedure Test_GPU is
@@ -34,6 +35,8 @@ begin
         Name   => "Emulator Test GPU");
    Canvas := Get_Canvas (Window);
 
+   GB.Main_Clock.Set_Never_Wait (True);
+
    Next := Clock + Period;
 
    while not Is_Killed loop
@@ -60,15 +63,7 @@ begin
 
       Swap_Buffers (Window);
 
-      for Y in GB.Screen'Range (2) loop
-         Renderscan
-            (GB.Screen,
-             GB.Memory,
-             Y,
-             (Select_Tile_Data_1 => True, others => False),
-             0,
-             0);
-      end loop;
+      GPU.Render.Render (GB);
 
       delay until Next;
       Next := Next + Period;
