@@ -2,6 +2,8 @@ with HAL; use HAL;
 with CPU; use CPU;
 
 package Instructions is
+   type Cond is (Z, NZ, C, NC);
+
    --  8 bit load instructions
    procedure LD (CPU : in out CPU_T; Dest : Reg8_T; Src : Uint8);
    procedure LD (CPU : in out CPU_T; Dest : Reg8_T; Src : Reg8_T);
@@ -24,6 +26,14 @@ package Instructions is
    procedure LD (CPU : in out CPU_T; Dest : Addr16; Src : Reg16_T);
    procedure LD (CPU : in out CPU_T; Dest : Reg16_T; Src : Reg16_T);
    procedure LDHL (CPU : in out CPU_T; R : Reg16_T; Offset : Uint8);
+
+   --  Jump instructions
+   procedure JP (CPU : in out CPU_T; Loc : Addr16);
+   procedure JP (CPU : in out CPU_T; Flag_Cond : Cond; Loc : Addr16);
+   procedure JR (CPU : in out CPU_T; Loc : Addr16; Offs : Int8);
+   procedure JR (CPU : in out CPU_T; Flag_Cond : Cond; Loc : Addr16;
+                 Offs : Int8);
+
 
    --  8 bit arithmetic instructions
    procedure ADD (CPU : in out CPU_T; Left : Reg8_T; Right : Uint8);
