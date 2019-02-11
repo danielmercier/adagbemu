@@ -1,3 +1,4 @@
+with Ada.Unchecked_Conversion;
 with Interfaces; use Interfaces;
 
 package body CPU is
@@ -131,6 +132,12 @@ package body CPU is
       Result := Mem (CPU, Get_PC (CPU));
       Increment_PC (CPU);
       return Result;
+   end Read_Next;
+
+   function Read_Next (CPU : in out CPU_T) return Int8 is
+      function Convert is new Ada.Unchecked_Conversion (Uint8, Int8);
+   begin
+      return Convert (Read_Next (CPU));
    end Read_Next;
 
    function Read_Next (CPU : in out CPU_T) return Addr8 is

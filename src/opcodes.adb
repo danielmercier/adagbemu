@@ -1,15 +1,18 @@
 with CPU.Logger; use CPU.Logger;
+with Instructions; use Instructions;
 
 package body OPCodes is
    procedure Unimplemented (CPU : CPU_T) is
    begin
       Log_Not_Implemented (CPU);
+      Log_CPU_Info (CPU);
       raise Not_Implemented;
    end Unimplemented;
 
    procedure OPCode_00 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      --  NOP
+      null;
    end OPCode_00;
 
    procedure OPCode_01 (CPU : in out CPU_T) is
@@ -34,12 +37,12 @@ package body OPCodes is
 
    procedure OPCode_05 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, B);
    end OPCode_05;
 
    procedure OPCode_06 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, B, Read_Next (CPU));
    end OPCode_06;
 
    procedure OPCode_07 (CPU : in out CPU_T) is
@@ -79,7 +82,7 @@ package body OPCodes is
 
    procedure OPCode_0E (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, C, Read_Next (CPU));
    end OPCode_0E;
 
    procedure OPCode_0F (CPU : in out CPU_T) is
@@ -169,12 +172,12 @@ package body OPCodes is
 
    procedure OPCode_20 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      JR (CPU, NZ, Read_Next (CPU));
    end OPCode_20;
 
    procedure OPCode_21 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, HL, Read_Next (CPU));
    end OPCode_21;
 
    procedure OPCode_22 (CPU : in out CPU_T) is
@@ -259,7 +262,7 @@ package body OPCodes is
 
    procedure OPCode_32 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LDD (CPU, +HL, A);
    end OPCode_32;
 
    procedure OPCode_33 (CPU : in out CPU_T) is
@@ -884,7 +887,7 @@ package body OPCodes is
 
    procedure OPCode_AF (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      XORR (CPU, A);
    end OPCode_AF;
 
    procedure OPCode_B0 (CPU : in out CPU_T) is
@@ -984,7 +987,7 @@ package body OPCodes is
 
    procedure OPCode_C3 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      JP (CPU, Read_Next (CPU));
    end OPCode_C3;
 
    procedure OPCode_C4 (CPU : in out CPU_T) is

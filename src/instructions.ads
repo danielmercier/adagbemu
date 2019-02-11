@@ -30,9 +30,8 @@ package Instructions is
    --  Jump instructions
    procedure JP (CPU : in out CPU_T; Loc : Addr16);
    procedure JP (CPU : in out CPU_T; Flag_Cond : Cond; Loc : Addr16);
-   procedure JR (CPU : in out CPU_T; Loc : Addr16; Offs : Int8);
-   procedure JR (CPU : in out CPU_T; Flag_Cond : Cond; Loc : Addr16;
-                 Offs : Int8);
+   procedure JR (CPU : in out CPU_T; Offs : Int8);
+   procedure JR (CPU : in out CPU_T; Flag_Cond : Cond; Offs : Int8);
 
 
    --  8 bit arithmetic instructions

@@ -57,6 +57,7 @@ package CPU is
    --  Functions that read the next value at location program counter and
    --  increments program counter to point to the new location
    function Read_Next (CPU : in out CPU_T) return Uint8;
+   function Read_Next (CPU : in out CPU_T) return Int8;
    function Read_Next (CPU : in out CPU_T) return Addr8;
    function Read_Next (CPU : in out CPU_T) return Uint16;
    function Read_Next (CPU : in out CPU_T) return Addr16;

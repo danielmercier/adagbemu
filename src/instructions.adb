@@ -152,24 +152,23 @@ package body Instructions is
       end case;
    end JP;
 
-   procedure JR (CPU : in out CPU_T; Loc : Addr16; Offs : Int8) is
-      New_Loc : constant Addr16 := Addr16 (Integer (Loc) + Integer (Offs));
+   procedure JR (CPU : in out CPU_T; Offs : Int8) is
+      New_Loc : constant Addr16 :=
+         Addr16 (Integer (Get_PC (CPU)) + Integer (Offs));
    begin
       JP (CPU, New_Loc);
    end JR;
 
-   procedure JR (CPU : in out CPU_T; Flag_Cond : Cond; Loc : Addr16;
-                 Offs : Int8)
+   procedure JR (CPU : in out CPU_T; Flag_Cond : Cond; Offs : Int8)
    is
       procedure Jump_If
          (CPU : in out CPU_T;
           Condition : Boolean;
-          Loc : Addr16;
           Offs : Int8)
       is
       begin
          if Condition then
-            JR (CPU, Loc, Offs);
+            JR (CPU, Offs);
             Set_Last_Branch_Taken (CPU, True);
          else
             Set_Last_Branch_Taken (CPU, False);
@@ -178,13 +177,13 @@ package body Instructions is
    begin
       case Flag_Cond is
          when Z =>
-            Jump_If (CPU, Flag (CPU, Z), Loc, Offs);
+            Jump_If (CPU, Flag (CPU, Z), Offs);
          when NZ =>
-            Jump_If (CPU, not Flag (CPU, Z), Loc, Offs);
+            Jump_If (CPU, not Flag (CPU, Z), Offs);
          when C =>
-            Jump_If (CPU, Flag (CPU, C), Loc, Offs);
+            Jump_If (CPU, Flag (CPU, C), Offs);
          when NC =>
-            Jump_If (CPU, not Flag (CPU, C), Loc, Offs);
+            Jump_If (CPU, not Flag (CPU, C), Offs);
       end case;
    end JR;
 

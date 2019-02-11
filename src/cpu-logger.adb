@@ -20,6 +20,25 @@ package body CPU.Logger is
          Put_Line (To_String (Unprefixed (OPCode)));
       end if;
    end Log_Not_Implemented;
+
+   procedure Log_CPU_Info (CPU : CPU_T) is
+   begin
+      for R in Reg16_T loop
+         Put (R'Image & ": ");
+         Put (Reg (CPU, R));
+         New_Line;
+      end loop;
+
+      Put ("PC: ");
+      Put (Get_PC (CPU));
+      New_Line;
+   end Log_CPU_Info;
 begin
    OPCode_IO.Default_Base := 16;
+   Uint8_IO.Default_Base := 16;
+   Uint16_IO.Default_Base := 16;
+   Int8_IO.Default_Base := 16;
+   Int16_IO.Default_Base := 16;
+   Addr8_IO.Default_Base := 16;
+   Addr16_IO.Default_Base := 16;
 end CPU.Logger;
