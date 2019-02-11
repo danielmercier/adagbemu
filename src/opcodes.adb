@@ -67,7 +67,7 @@ package body OPCodes is
 
    procedure OPCode_0B (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, BC);
    end OPCode_0B;
 
    procedure OPCode_0C (CPU : in out CPU_T) is
@@ -77,7 +77,7 @@ package body OPCodes is
 
    procedure OPCode_0D (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, C);
    end OPCode_0D;
 
    procedure OPCode_0E (CPU : in out CPU_T) is
@@ -117,7 +117,7 @@ package body OPCodes is
 
    procedure OPCode_15 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, D);
    end OPCode_15;
 
    procedure OPCode_16 (CPU : in out CPU_T) is
@@ -147,7 +147,7 @@ package body OPCodes is
 
    procedure OPCode_1B (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, DE);
    end OPCode_1B;
 
    procedure OPCode_1C (CPU : in out CPU_T) is
@@ -157,7 +157,7 @@ package body OPCodes is
 
    procedure OPCode_1D (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, E);
    end OPCode_1D;
 
    procedure OPCode_1E (CPU : in out CPU_T) is
@@ -197,7 +197,7 @@ package body OPCodes is
 
    procedure OPCode_25 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, H);
    end OPCode_25;
 
    procedure OPCode_26 (CPU : in out CPU_T) is
@@ -227,7 +227,7 @@ package body OPCodes is
 
    procedure OPCode_2B (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, HL);
    end OPCode_2B;
 
    procedure OPCode_2C (CPU : in out CPU_T) is
@@ -237,7 +237,7 @@ package body OPCodes is
 
    procedure OPCode_2D (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, L);
    end OPCode_2D;
 
    procedure OPCode_2E (CPU : in out CPU_T) is
@@ -307,7 +307,7 @@ package body OPCodes is
 
    procedure OPCode_3B (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, SP);
    end OPCode_3B;
 
    procedure OPCode_3C (CPU : in out CPU_T) is
@@ -317,7 +317,7 @@ package body OPCodes is
 
    procedure OPCode_3D (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      DEC (CPU, A);
    end OPCode_3D;
 
    procedure OPCode_3E (CPU : in out CPU_T) is
