@@ -122,7 +122,7 @@ package body OPCodes is
 
    procedure OPCode_16 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, D, Read_Next (CPU));
    end OPCode_16;
 
    procedure OPCode_17 (CPU : in out CPU_T) is
@@ -162,7 +162,7 @@ package body OPCodes is
 
    procedure OPCode_1E (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, E, Read_Next (CPU));
    end OPCode_1E;
 
    procedure OPCode_1F (CPU : in out CPU_T) is
@@ -202,7 +202,7 @@ package body OPCodes is
 
    procedure OPCode_26 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, H, Read_Next (CPU));
    end OPCode_26;
 
    procedure OPCode_27 (CPU : in out CPU_T) is
@@ -242,7 +242,7 @@ package body OPCodes is
 
    procedure OPCode_2E (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, L, Read_Next (CPU));
    end OPCode_2E;
 
    procedure OPCode_2F (CPU : in out CPU_T) is
@@ -322,7 +322,7 @@ package body OPCodes is
 
    procedure OPCode_3E (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, A, Read_Next (CPU));
    end OPCode_3E;
 
    procedure OPCode_3F (CPU : in out CPU_T) is
