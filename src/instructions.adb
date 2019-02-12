@@ -97,9 +97,10 @@ package body Instructions is
    end LD;
 
    procedure LD (CPU : in out CPU_T; Dest : Addr16; Src : Reg16_T) is
+      Value : constant Word := To_Word (Reg (CPU, SRC));
    begin
-      --  TODO: Don't know how to implement this, opcode is: 0x08
-      raise Program_Error;
+      Set_Mem (CPU, Dest, Value (Lo));
+      Set_Mem (CPU, Dest + 1, Value (Hi));
    end LD;
 
    procedure LD (CPU : in out CPU_T; Dest : Reg16_T; Src : Reg16_T) is

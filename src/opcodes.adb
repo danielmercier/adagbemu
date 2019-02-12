@@ -52,7 +52,7 @@ package body OPCodes is
 
    procedure OPCode_08 (CPU : in out CPU_T) is
    begin
-      Unimplemented (CPU);
+      LD (CPU, Read_A16 (CPU), SP);
    end OPCode_08;
 
    procedure OPCode_09 (CPU : in out CPU_T) is
