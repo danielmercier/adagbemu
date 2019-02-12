@@ -1,4 +1,5 @@
 with CPU.Interrupts; use CPU.Interrupts;
+with OPCode_Table; use OPCode_Table;
 
 package body Decoder is
    procedure Emulate_Cycle (GB : in out GB_T) is

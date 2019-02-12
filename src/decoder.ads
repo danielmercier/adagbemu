@@ -1,7 +1,6 @@
 with HAL; use HAL;
 with CPU; use CPU;
 with GB; use GB;
-with OPCode_Table; use OPCode_Table;
 
 package Decoder is
    procedure Emulate_Cycle (GB : in out GB_T);

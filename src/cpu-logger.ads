@@ -1,6 +1,5 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-with HAL; use HAL;
 with CPU; use CPU;
 
 package CPU.Logger is
