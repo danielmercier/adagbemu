@@ -1,16 +1,13 @@
 package body GPU.Render is
    procedure Render (GB : in out GB_T) is
    begin
-      --  Emulate reading of OAM
-      GB.Main_Clock.Will_Wait (Read_OAM);
-      GB.Main_Clock.Wait;
-
-      --  Emulate reading of VRAM
-      GB.Main_Clock.Will_Wait (Read_VRAM);
-      GB.Main_Clock.Wait;
-
       for Y in Screen_Y loop
-         GB.Main_Clock.Will_Wait (HBlank);
+         --  Emulate reading of OAM
+         GB.Main_Clock.Will_Wait (Read_OAM);
+         GB.Main_Clock.Wait;
+
+         --  Emulate reading of VRAM
+         GB.Main_Clock.Will_Wait (Read_VRAM);
          --  render a line just after that
          Renderscan
             (Screen => GB.Screen,
@@ -19,6 +16,9 @@ package body GPU.Render is
              LCDC => LCDC (GB.Memory),
              Scroll_X => Screen_Background_X (SCX (GB.Memory)),
              Scroll_Y => Screen_Background_Y (SCY (GB.Memory)));
+         GB.Main_Clock.Wait;
+
+         GB.Main_Clock.Will_Wait (HBlank);
          Increment_LY (GB.Memory);
          GB.Main_Clock.Wait;
       end loop;
