@@ -38,6 +38,13 @@ package body MMU.Registers is
       return Convert (Mem.Get (IF_Addr));
    end IFF;
 
+   function IE (Mem : Memory_T) return Interrupt_Array is
+      function Convert is new Ada.Unchecked_Conversion
+         (Uint8, Interrupt_Array);
+   begin
+      return Convert (Mem.Get (IE_Addr));
+   end IE;
+
    procedure Increment_LY (Mem : Memory_T) is
    begin
       Mem.Set (LY_Addr, Mem.Get (LY_Addr) + 1);

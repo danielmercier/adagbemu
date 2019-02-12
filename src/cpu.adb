@@ -116,6 +116,21 @@ package body CPU is
       CPU.Program_Counter := PC;
    end Set_PC;
 
+   function Interrupt_Master_Enable (CPU : CPU_T) return Boolean is
+   begin
+      return CPU.Interrupt_Master_Enable;
+   end Interrupt_Master_Enable;
+
+   procedure Disable_Interrupts (CPU : in out CPU_T) is
+   begin
+      CPU.Interrupt_Master_Enable := False;
+   end Disable_Interrupts;
+
+   procedure Enable_Interrupts (CPU : in out CPU_T) is
+   begin
+      CPU.Interrupt_Master_Enable := True;
+   end Enable_Interrupts;
+
    function Last_Branch_Taken (CPU : CPU_T) return Boolean is
    begin
       return CPU.Last_Branch_Taken;

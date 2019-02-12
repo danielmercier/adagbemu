@@ -1,7 +1,15 @@
+with CPU.Interrupts; use CPU.Interrupts;
+
 package body Decoder is
    procedure Emulate_Cycle (GB : in out GB_T) is
-      OPCode : constant OPCode_T := Fetch (GB.CPU);
+      OPCode : OPCode_T := Fetch (GB.CPU);
    begin
+      if Interrupt_Master_Enable (GB.CPU) then
+         --  Check here for any inerrupt before fetching
+         Handle_Interrupts (GB.CPU);
+      end if;
+
+      OPCode := Fetch (GB.CPU);
       Increment_PC (GB.CPU);
       Decode (GB, OPCode);
    end Emulate_Cycle;

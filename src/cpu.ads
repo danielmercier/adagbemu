@@ -49,6 +49,13 @@ package CPU is
    --  set the current program counter
    procedure Set_PC (CPU : in out CPU_T; PC : Addr16);
 
+   --  Return the state of the master interrupts flag
+   function Interrupt_Master_Enable (CPU : CPU_T) return Boolean;
+   --  Master disable interrupts
+   procedure Disable_Interrupts (CPU : in out CPU_T);
+   --  Master enable interrupts
+   procedure Enable_Interrupts (CPU : in out CPU_T);
+
    --  Return true if the last instruction made a conditional jump
    function Last_Branch_Taken (CPU : CPU_T) return Boolean;
    --  Set to B if the last instruction made a condition jump
@@ -101,6 +108,9 @@ private
       Program_Counter : Addr16;
 
       Memory : Memory_T;
+
+      --  Flag to say if interrupts are enabled or not
+      Interrupt_Master_Enable : Boolean := True;
 
       --  Used to signal that the last instruction made a conditional jump
       Last_Branch_Taken : Boolean := False;

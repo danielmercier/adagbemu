@@ -38,12 +38,14 @@ package MMU.Registers is
    SCY_Addr : constant Addr16 := 16#FF42#;
    SCX_Addr : constant Addr16 := 16#FF43#;
    LY_Addr : constant Addr16 := 16#FF44#;
+   IE_Addr : constant Addr16 := 16#FFFF#;
 
    function LCDC (Mem : Memory_T) return LCDC_T;
    function SCY (Mem : Memory_T) return Uint8;
    function SCX (Mem : Memory_T) return Uint8;
    function LY (Mem : Memory_T) return Uint8;
    function IFF (Mem : Memory_T) return Interrupt_Array;
+   function IE (Mem : Memory_T) return Interrupt_Array;
 
    procedure Increment_LY (Mem : Memory_T);
    procedure Reset_LY (Mem : Memory_T);
