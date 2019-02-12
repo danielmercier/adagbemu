@@ -9,6 +9,6 @@ package GPU.Render is
    --  Number of lines for the full vertical blank
    VBlank_Line_Number : constant := 10;
 
-   --  Use timings to render the screen. Also update 
+   --  Use timings to render the screen. Also update
    procedure Render (GB : in out GB_T);
 end GPU.Render;

@@ -197,7 +197,7 @@ package body Instructions is
       Set_Flag (CPU, H, Check_Half_Carry (LVal, RVal));
       Set_Flag (CPU, C, LVal > RVal - Uint8'Last);
    end ADD;
-   
+
    procedure ADD (CPU : in out CPU_T; Left : Reg8_T; Right : Reg8_T) is
    begin
       ADD (CPU, Left, Reg (CPU, Right));
@@ -294,7 +294,7 @@ package body Instructions is
       Set_Flag (CPU, H, False);
       Set_Flag (CPU, C, False);
    end ORR;
-   
+
    procedure ORR (CPU : in out CPU_T; R : Reg8_T) is
    begin
       ORR (CPU, Reg (CPU, R));
