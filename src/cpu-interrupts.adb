@@ -21,47 +21,55 @@ package body CPU.Interrupts is
       end if;
    end Interrupt;
 
-   procedure Interrupt_STAT_VBlank (CPU : in out CPU_T) is
-      IE : constant Interrupt_Array := MMU.Registers.IE (CPU.Memory);
+   procedure Interrupt_VBlank (CPU : in out CPU_T) is
       STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
    begin
-      if IE (LCDC_Status) then
-         if STAT.VBlank_Interrupt then
-            Set_IF (CPU.Memory, LCDC_Status, True);
-         end if;
-      end if;
-   end Interrupt_STAT_VBlank;
+      --  Two possible interrupts for VBlank, one directly called VBlank
+      --  and the second one from the LCDC_Status
 
-   procedure Interrupt_STAT_HBlank (CPU : in out CPU_T) is
-      IE : constant Interrupt_Array := MMU.Registers.IE (CPU.Memory);
-      STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
-   begin
-      if IE (LCDC_Status) then
-         if STAT.HBlank_Interrupt then
-            Set_IF (CPU.Memory, LCDC_Status, True);
-         end if;
-      end if;
-   end Interrupt_STAT_HBlank;
+      Interrupt (CPU, VBlank);
 
-   procedure Interrupt_STAT_LY_Coincidence (CPU : in out CPU_T) is
-      IE : constant Interrupt_Array := MMU.Registers.IE (CPU.Memory);
-      STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
-   begin
-      if IE (LCDC_Status) then
-         if STAT.Coincidence_Interrupt then
-            Set_IF (CPU.Memory, LCDC_Status, True);
-         end if;
+      if STAT.VBlank_Interrupt then
+         Interrupt (CPU, LCDC_Status);
       end if;
-   end Interrupt_STAT_LY_Coincidence;
+   end Interrupt_VBlank;
 
-   procedure Interrupt_STAT_OAM (CPU : in out CPU_T) is
-      IE : constant Interrupt_Array := MMU.Registers.IE (CPU.Memory);
+   procedure Interrupt_Timer_Overflow (CPU : in out CPU_T) is
+   begin
+      Interrupt (CPU, Timer_Overflow);
+   end Interrupt_Timer_Overflow;
+
+   procedure Interrupt_Serial_Transfer_Completion (CPU : in out CPU_T) is
+   begin
+      Interrupt (CPU, Serial_Transfer_Completion);
+   end Interrupt_Serial_Transfer_Completion;
+
+   procedure Interrupt_KeyPad (CPU : in out CPU_T) is
+   begin
+      Interrupt (CPU, KeyPad);
+   end Interrupt_KeyPad;
+
+   procedure Interrupt_HBlank (CPU : in out CPU_T) is
       STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
    begin
-      if IE (LCDC_Status) then
-         if STAT.OAM_Interrupt then
-            Set_IF (CPU.Memory, LCDC_Status, True);
-         end if;
+      if STAT.HBlank_Interrupt then
+         Interrupt (CPU, LCDC_Status);
       end if;
-   end Interrupt_STAT_OAM;
+   end Interrupt_HBlank;
+
+   procedure Interrupt_LY_Coincidence (CPU : in out CPU_T) is
+      STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
+   begin
+      if STAT.Coincidence_Interrupt then
+         Interrupt (CPU, LCDC_Status);
+      end if;
+   end Interrupt_LY_Coincidence;
+
+   procedure Interrupt_OAM (CPU : in out CPU_T) is
+      STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
+   begin
+      if STAT.OAM_Interrupt then
+         Interrupt (CPU, LCDC_Status);
+      end if;
+   end Interrupt_OAM;
 end CPU.Interrupts;
