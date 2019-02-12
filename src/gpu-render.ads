@@ -1,4 +1,3 @@
-with HAL; use HAL;
 with GB; use GB;
 
 package GPU.Render is

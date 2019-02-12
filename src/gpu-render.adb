@@ -19,17 +19,17 @@ package body GPU.Render is
              LCDC => LCDC (GB.Memory),
              Scroll_X => Screen_Background_X (SCX (GB.Memory)),
              Scroll_Y => Screen_Background_Y (SCY (GB.Memory)));
-         GB.Memory.Increment_LY;
+         Increment_LY (GB.Memory);
          GB.Main_Clock.Wait;
       end loop;
 
       for Y in 1 .. VBlank_Line_Number loop
          GB.Main_Clock.Will_Wait (VBlank);
-         GB.Memory.Increment_LY;
+         Increment_LY (GB.Memory);
          GB.Main_Clock.Wait;
       end loop;
 
       --  Vertical blank finished, can reset ly
-      GB.Memory.Reset_LY;
+      Reset_LY (GB.Memory);
    end Render;
 end GPU.Render;

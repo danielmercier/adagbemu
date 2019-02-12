@@ -1,5 +1,6 @@
 with HAL; use HAL;
 with MMU; use MMU;
+with MMU.Registers; use MMU.Registers;
 
 package GPU is
    --  The color of a pixel (the palette will decide the real color)
