@@ -13,7 +13,7 @@ project GBEmu is
 
    package Compiler is
       for Default_Switches ("Ada") use ("-gnat12", "-g", "-gnatQ", "-O0",
-                                        "-gnata");
+                                        "-gnata", "-gnatwa", "-gnatwe");
    end Compiler;
 
    package Binder is
