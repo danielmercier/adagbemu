@@ -22,19 +22,46 @@ package MMU.Registers is
        Control_Operation);
    type LCDC_T is array (LCDC_Enum) of Boolean with Pack;
 
-   --  TODO: The size of this type is not 1 byte, check this
    type Interrupt_Enum is
       (VBlank,
        LCDC_Status,
        Timer_Overflow,
        Serial_Transfer_Completion,
        KeyPad);
-   type Interrupt_Array is array (Interrupt_Enum) of Boolean with Pack;
+   type Interrupt_Array is array (Interrupt_Enum) of Boolean
+      with Pack, Size => 8;
+
+   type Video_Mode is (HBlank, VBlank, OAM, Data_Transfer) with Size => 2;
+
+   type STAT_T is record
+      --  Current mode
+      Mode : Video_Mode;
+
+      --  True if LYC = LY
+      --  False otherwise
+      Coincidence_Flag : Boolean;
+
+      HBlank_Interrupt : Boolean;
+      VBlank_Interrupt : Boolean;
+      OAM_Interrupt : Boolean;
+      Coincidence_Interrupt : Boolean;
+   end record with Size => 8;
+
+   for STAT_T use record
+      Mode at 0 range 0 .. 1;
+      Coincidence_Flag at 0 range 2 .. 2;
+
+      HBlank_Interrupt at 0 range 3 .. 3;
+      VBlank_Interrupt at 0 range 4 .. 4;
+      OAM_Interrupt at 0 range 5 .. 5;
+      Coincidence_Interrupt at 0 range 6 .. 6;
+   end record;
 
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
 
    IF_Addr : constant Addr16 := 16#FF0F#;
    LCDC_Addr : constant Addr16 := 16#FF40#;
+   STAT_Addr : constant Addr16 := 16#FF41#;
    SCY_Addr : constant Addr16 := 16#FF42#;
    SCX_Addr : constant Addr16 := 16#FF43#;
    LY_Addr : constant Addr16 := 16#FF44#;
@@ -46,6 +73,7 @@ package MMU.Registers is
    function LY (Mem : Memory_T) return Uint8;
    function IFF (Mem : Memory_T) return Interrupt_Array;
    function IE (Mem : Memory_T) return Interrupt_Array;
+   function STAT (Mem : Memory_T) return STAT_T;
 
    procedure Increment_LY (Mem : Memory_T);
    procedure Reset_LY (Mem : Memory_T);

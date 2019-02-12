@@ -45,6 +45,12 @@ package body MMU.Registers is
       return Convert (Mem.Get (IE_Addr));
    end IE;
 
+   function STAT (Mem : Memory_T) return STAT_T is
+      function Convert is new Ada.Unchecked_Conversion (Uint8, STAT_T);
+   begin
+      return Convert (Mem.Get (STAT_Addr));
+   end STAT;
+
    procedure Increment_LY (Mem : Memory_T) is
    begin
       Mem.Set (LY_Addr, Mem.Get (LY_Addr) + 1);

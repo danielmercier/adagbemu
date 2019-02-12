@@ -3,6 +3,21 @@ with MMU.Registers; use MMU.Registers;
 package CPU.Interrupts is
    procedure Handle_Interrupts (CPU : in out CPU_T);
 
+   --  Following procedure should be called whenever the given interrupt
+   --  happens. The procedure will check if the given interrupt is enabled
+   --  and will set the IF register accordingly. For the LCDC interrupts,
+   --  one of the Interrupt_STAT procedure should be called instead of this
+   --  one
+   procedure Interrupt (CPU : in out CPU_T; Int : Interrupt_Enum)
+      with Pre => Int /= LCDC_Status;
+
+   --  Following procedures should be called whenever the given interrupt
+   --  happens. The procedure check if the ie flag for LCDC_Status is enable
+   --  and check if the interrupt is selected in the STAT register
+   procedure Interrupt_STAT_VBlank (CPU : in out CPU_T);
+   procedure Interrupt_STAT_HBlank (CPU : in out CPU_T);
+   procedure Interrupt_STAT_LY_Coincidence (CPU : in out CPU_T);
+   procedure Interrupt_STAT_OAM (CPU : in out CPU_T);
 private
    type Jump_Address_T is array (Interrupt_Enum) of Addr16;
    Jump_Address : constant Jump_Address_T :=
