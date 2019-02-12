@@ -171,27 +171,26 @@ package body CPU is
       return Addr16 (Result);
    end Pop;
 
-   function Read_Next (CPU : in out CPU_T) return Uint8 is
+   function Read_D8 (CPU : in out CPU_T) return Uint8 is
       Result : Uint8;
    begin
       Result := Mem (CPU, Get_PC (CPU));
       Increment_PC (CPU);
       return Result;
-   end Read_Next;
+   end Read_D8;
 
-   function Read_Next (CPU : in out CPU_T) return Int8 is
+   function Read_R8 (CPU : in out CPU_T) return Int8 is
       function Convert is new Ada.Unchecked_Conversion (Uint8, Int8);
    begin
-      return Convert (Read_Next (CPU));
-   end Read_Next;
+      return Convert (Read_D8 (CPU));
+   end Read_R8;
 
-   function Read_Next (CPU : in out CPU_T) return Addr8 is
-      Result : Uint8 renames Read_Next (CPU);
+   function Read_A8 (CPU : in out CPU_T) return Addr8 is
    begin
-      return Addr8 (Result);
-   end Read_Next;
+      return Addr8 (Read_D8 (CPU));
+   end Read_A8;
 
-   function Read_Next (CPU : in out CPU_T) return Uint16 is
+   function Read_D16 (CPU : in out CPU_T) return Uint16 is
       Low : Uint8;
       High : Uint8;
       Result : Uint16;
@@ -205,11 +204,10 @@ package body CPU is
                         or Unsigned_16 (Low));
 
       return Result;
-   end Read_Next;
+   end Read_D16;
 
-   function Read_Next (CPU : in out CPU_T) return Addr16 is
-      Next : Uint16 renames Read_Next (CPU);
+   function Read_A16 (CPU : in out CPU_T) return Addr16 is
    begin
-      return Addr16 (Next);
-   end Read_Next;
+      return Addr16 (Read_D16 (CPU));
+   end Read_A16;
 end CPU;

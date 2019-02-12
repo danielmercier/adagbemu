@@ -72,11 +72,11 @@ package CPU is
 
    --  Functions that read the next value at location program counter and
    --  increments program counter to point to the new location
-   function Read_Next (CPU : in out CPU_T) return Uint8;
-   function Read_Next (CPU : in out CPU_T) return Int8;
-   function Read_Next (CPU : in out CPU_T) return Addr8;
-   function Read_Next (CPU : in out CPU_T) return Uint16;
-   function Read_Next (CPU : in out CPU_T) return Addr16;
+   function Read_D8 (CPU : in out CPU_T) return Uint8;
+   function Read_R8 (CPU : in out CPU_T) return Int8;
+   function Read_A8 (CPU : in out CPU_T) return Addr8;
+   function Read_D16 (CPU : in out CPU_T) return Uint16;
+   function Read_A16 (CPU : in out CPU_T) return Addr16;
 private
    type Ptr8_T is new Reg8_T;
    type Ptr16_T is new Reg16_T;
