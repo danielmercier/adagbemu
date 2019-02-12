@@ -126,6 +126,36 @@ package body CPU is
       CPU.Last_Branch_Taken := B;
    end Set_Last_Branch_Taken;
 
+   procedure Push (CPU : in out CPU_T; Value : Uint16) is
+      To_Push : constant Word := To_Word (Value);
+      Stack_Pointer : constant Addr16 := Reg (CPU, SP);
+   begin
+      Set_Mem (CPU, Stack_Pointer - 1, To_Push (Hi));
+      Set_Mem (CPU, Stack_Pointer - 2, To_Push (Lo));
+      Set_Reg (CPU, SP, Stack_Pointer - 2);
+   end Push;
+
+   procedure Push (CPU : in out CPU_T; Value : Addr16) is
+   begin
+      Push (CPU, Uint16 (Value));
+   end Push;
+
+   function Pop (CPU : in out CPU_T) return Uint16 is
+      Result : Word;
+      Stack_Pointer : constant Addr16 := Reg (CPU, SP);
+   begin
+      Result (Lo) := Mem (CPU, Stack_Pointer);
+      Result (Hi) := Mem (CPU, Stack_Pointer + 1);
+      Set_Reg (CPU, SP, Stack_Pointer + 2);
+      return From_Word (Result);
+   end Pop;
+
+   function Pop (CPU : in out CPU_T) return Addr16 is
+      Result : constant Uint16 := Pop (CPU);
+   begin
+      return Addr16 (Result);
+   end Pop;
+
    function Read_Next (CPU : in out CPU_T) return Uint8 is
       Result : Uint8;
    begin

@@ -54,6 +54,15 @@ package CPU is
    --  Set to B if the last instruction made a condition jump
    procedure Set_Last_Branch_Taken (CPU : in out CPU_T; B : Boolean);
 
+   --  Push given value on the stack. Stack is defined by stack pointer.
+   --  The stack pointer is decremented before the push
+   procedure Push (CPU : in out CPU_T; Value : Uint16);
+   procedure Push (CPU : in out CPU_T; Value : Addr16);
+   --  Pop value and return it, Stack_Pointer points to the top of the stack.
+   --  It is incremented after.
+   function Pop (CPU : in out CPU_T) return Uint16;
+   function Pop (CPU : in out CPU_T) return Addr16;
+
    --  Functions that read the next value at location program counter and
    --  increments program counter to point to the new location
    function Read_Next (CPU : in out CPU_T) return Uint8;

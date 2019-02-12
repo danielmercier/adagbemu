@@ -120,6 +120,16 @@ package body Instructions is
       Set_Flag (CPU, C, Left > Uint16'Last - Right);
    end LDHL;
 
+   procedure PUSH (CPU : in out CPU_T; R : Reg16_T) is
+   begin
+      Push (CPU, Reg (CPU, R));
+   end PUSH;
+
+   procedure POP (CPU : in out CPU_T; R : Reg16_T) is
+   begin
+      Set_Reg (CPU, R, Pop (CPU));
+   end POP;
+
    procedure JP (CPU : in out CPU_T; Loc : Addr16) is
    begin
       Set_PC (CPU, Loc);
