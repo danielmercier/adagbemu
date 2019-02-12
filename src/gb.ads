@@ -25,7 +25,7 @@ package GB is
       CPU : CPU_T;
 
       Main_Clock : Clock_Waiter_T;
-   
+
       Screen : Screen_T;
    end record;
 
