@@ -1,5 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
-
 with Ada.Unchecked_Conversion;
 
 package body GPU is
@@ -38,8 +36,8 @@ package body GPU is
       Start_Addr : constant Addr16 :=
          Tile_Addr + (Addr16 (Y) * One_Pixel_Size);
 
-      Low_Bit : Bit_Array := Convert (Mem.Get (Start_Addr));
-      High_Bit : Bit_Array := Convert (Mem.Get (Start_Addr + 1));
+      Low_Bit : constant Bit_Array := Convert (Mem.Get (Start_Addr));
+      High_Bit : constant Bit_Array := Convert (Mem.Get (Start_Addr + 1));
 
       --  We need to reverse the X coordinate cause the most significant bit
       --  is the first pixel
@@ -60,7 +58,7 @@ package body GPU is
    end Get_Pixel_Color;
 
    function Get_Tile_Address (N : Signed_Tile_Pattern) return Tile_Data_0 is
-      Address : Integer :=
+      Address : constant Integer :=
          Integer (Tile_Data_0_Start)
          + (Integer (N) * Tile_Size_X * One_Pixel_Size);
    begin

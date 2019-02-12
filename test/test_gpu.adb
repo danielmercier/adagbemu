@@ -3,11 +3,8 @@ with Display.Basic; use Display.Basic;
 with Ada.Real_Time; use Ada.Real_Time;
 --with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 with GB; use GB;
-with MMU; use MMU;
-with CPU; use CPU;
 with GPU; use GPU;
-with GPU.Render; use GPU.Render;
-with Loader; use Loader;
+with GPU.Render;
 
 procedure Test_GPU is
    Pixel_Size : constant := 2;

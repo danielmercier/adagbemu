@@ -1,5 +1,3 @@
-with Ada.Real_Time; use Ada.Real_Time;
-
 with Loader; use Loader;
 with GB; use GB;
 with Decoder; use Decoder;

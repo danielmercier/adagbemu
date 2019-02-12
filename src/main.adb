@@ -3,8 +3,6 @@ with Display.Basic; use Display.Basic;
 with Ada.Real_Time; use Ada.Real_Time;
 --with Last_Chance_Handler; pragma Unreferenced (Last_Chance_Handler);
 
-with MMU; use MMU;
-with CPU; use CPU;
 with GPU; use GPU;
 with GB; use GB;
 
