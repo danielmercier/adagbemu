@@ -21,7 +21,7 @@ package body GB is
       procedure Add (Amount : Clock_T) is
       begin
          Clock := Clock + Amount;
-         if Clock > Waiting_Amount then
+         if Clock >= Waiting_Amount then
             Is_Ok := True;
          end if;
       end Add;
@@ -36,6 +36,7 @@ package body GB is
          if not Never_Wait then
             Is_Ok := False;
          end if;
+
          Waiting_Amount := Amount;
       end Will_Wait;
 
@@ -49,7 +50,8 @@ package body GB is
 
       entry Wait when Is_Ok is
       begin
-         null;
+            --  Some additional cycles might remain, don't set to 0
+         Clock := Clock - Waiting_Amount;
       end Wait;
    end Clock_Waiter_T;
 end GB;

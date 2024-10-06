@@ -2,3 +2,4 @@ alire/
 obj/
 config/
 tools/opcodes.json
+mem/rom
