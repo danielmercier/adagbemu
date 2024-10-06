@@ -30,4 +30,5 @@ package GB is
    end record;
 
    procedure Init (GB : out GB_T);
+   procedure Finalize (GB : in out GB_T);
 end GB;

@@ -1,3 +1,5 @@
+with Ada.Unchecked_Deallocation;
+
 with Loader; use Loader;
 
 package body GB is
@@ -8,6 +10,12 @@ package body GB is
 
       Load ("mem/mem.dump", GB, 16#8000#);
    end Init;
+
+   procedure Finalize (GB : in out GB_T) is
+      procedure Free is new Ada.Unchecked_Deallocation (Memory_P, Memory_T);
+   begin
+      Free (GB.Memory);
+   end Finalize;
 
    protected body Clock_Waiter_T is
       procedure Add (Amount : Clock_T) is

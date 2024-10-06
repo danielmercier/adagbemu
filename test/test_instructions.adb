@@ -27,4 +27,6 @@ begin
    Init (GB);
 
    Test_Push (GB);
+
+   Finalize (GB);
 end Test_Instructions;

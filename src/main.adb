@@ -21,9 +21,18 @@ procedure Main is
    Finish : Boolean := False;
 
    GB : GB_T;
+
+   procedure Finalize is
+   begin
+      Finalize (GB);
+      Window.Finalize;
+      SDL.Finalise;
+   end Finalize;
 begin
    Init (GB);
    if not SDL_Renderer.Init (Window, Renderer) then
+      Finalize;
+
       return;
    end if;
 
@@ -44,6 +53,5 @@ begin
       Next := Next + Period;
    end loop;
 
-   Window.Finalize;
-   SDL.Finalise;
+   Finalize;
 end Main;
