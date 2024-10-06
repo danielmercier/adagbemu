@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./obj/test_registers
+./obj/development/test_registers
 if [ $? -ne 0 ]
 then
    echo "test_registers: FAILED"
@@ -8,7 +8,7 @@ else
    echo "test_registers: PASSED"
 fi
 
-./obj/test_instructions
+./obj/development/test_instructions
 if [ $? -ne 0 ]
 then
    echo "test_instructions: FAILED"
@@ -16,7 +16,7 @@ else
    echo "test_instructions: PASSED"
 fi
 
-./obj/test_decoder
+./obj/development/test_decoder
 if [ $? -ne 0 ]
 then
    echo "test_decoder: FAILED"

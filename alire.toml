@@ -1,0 +1,21 @@
+name = "adagbemu"
+description = "Gameboy emulator written in Ada."
+version = "0.1.0-dev"
+
+authors = ["Daniel Mercier"]
+maintainers = ["Daniel Mercier <mercierdaniel91@gmail.com>"]
+maintainers-logins = ["danielmercier"]
+licenses = "Zlib"
+website = ""
+tags = ["emulator", "gamebay"]
+
+executables = ["gbemu"]
+
+[build-profiles]
+  "*" = "development"
+
+[[depends-on]]
+  sdlada       = "*"
+
+[[pins]]
+  sdlada       = { url = "git@github.com:ada-game-framework/sdlada.git" }

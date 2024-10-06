@@ -1,7 +1,5 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-with CPU; use CPU;
-
 package CPU.Logger is
    package Uint8_IO is new Modular_IO (Uint8);
    use Uint8_IO;

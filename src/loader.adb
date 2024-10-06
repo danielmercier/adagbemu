@@ -20,5 +20,7 @@ package body Loader is
          exit when End_Of_File (File);
          Current_Addr := Current_Addr + 1;
       end loop;
+
+      Close (File);
    end Load;
 end Loader;

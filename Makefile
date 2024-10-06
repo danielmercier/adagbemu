@@ -1,10 +1,10 @@
 all: native
 
 native:
-	gprbuild -P gbemu -Xbackend=pure_sdl
+	alr build
 
 test: native
 	./tools/run-tests
 
 clean:
-	gprclean -P gbemu
+	alr clean
