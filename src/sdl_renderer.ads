@@ -2,10 +2,12 @@ with SDL.Video.Renderers;
 with SDL.Video.Windows;
 
 with GB; use GB;
+with GPU; use GPU;
 
 package SDL_Renderer is
-   Width  : constant := 240;
-   Height : constant := 320;
+   Pixel_Size : constant := 2;
+   Width  : constant := Integer (Screen_X'Last + 1) * Pixel_Size;
+   Height : constant := Integer (Screen_Y'Last + 1) * Pixel_Size;
 
    function Init
       (Window   : out SDL.Video.Windows.Window;

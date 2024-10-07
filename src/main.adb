@@ -7,6 +7,7 @@ with SDL_Renderer;
 
 with Ada.Real_Time; use Ada.Real_Time;
 
+with GPU.Render;
 with GB; use GB;
 
 procedure Main is
@@ -36,6 +37,8 @@ begin
       return;
    end if;
 
+   GB.Main_Clock.Set_Never_Wait (True);
+
    Next := Clock + Period;
 
    while not Finish loop
@@ -48,6 +51,8 @@ begin
             Finish := True;
          end if;
       end loop;
+
+      GPU.Render.Render (GB);
 
       delay until Next;
       Next := Next + Period;
