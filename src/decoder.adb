@@ -1,18 +1,28 @@
 with CPU.Interrupts; use CPU.Interrupts;
 with OPCode_Table; use OPCode_Table;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Decoder is
    procedure Emulate_Cycle (GB : in out GB_T) is
-      OPCode : OPCode_T := Fetch (GB.CPU);
+      OPCode : constant OPCode_T := Fetch (GB.CPU);
    begin
+      if Halt_Mode (GB.CPU) and then Pending_Interrupt (GB.CPU) then
+         --  Resume execution as an interrupt is pending
+         Unset_Halt_Mode (GB.CPU);
+      end if;
+
       if Interrupt_Master_Enable (GB.CPU) then
          --  Check here for any inerrupt before fetching
          Handle_Interrupts (GB.CPU);
       end if;
 
-      OPCode := Fetch (GB.CPU);
-      Increment_PC (GB.CPU);
-      Decode (GB, OPCode);
+      if (Halt_Mode (GB.CPU)) then
+         GB.Main_Clock.Increment;
+      else
+         Increment_PC (GB.CPU);
+         Decode (GB, OPCode);
+      end if;
    end Emulate_Cycle;
 
    function Fetch (CPU : CPU_T) return OPCode_T is
@@ -23,14 +33,21 @@ package body Decoder is
    procedure Decode (GB : in out GB_T; OPCode : OPCode_T) is
       Instruction_Info : Instruction_Info_T;
    begin
-      case OPCode is
-         when 16#CB# =>
-            Instruction_Info := CBprefixed (Fetch (GB.CPU));
-            --  We fetch the next opcode, so we need to increment the pc
-            Increment_PC (GB.CPU);
-         when others =>
-            Instruction_Info := Unprefixed (OPCode);
-      end case;
+      if Should_Enable_Interrupts (GB.CPU) then
+         --  This happens after emulating iterrupts thus we can directly
+         --  re-enable it and the next instruction is before any interrupt
+         Unset_Should_Enable_Interrupts (GB.CPU);
+         Enable_Interrupts (GB.CPU);
+      end if;
+
+      if CB_Prefixed (GB.CPU) then
+         Instruction_Info := CBprefixed (OPCode);
+
+         --  Prefix is only applied once, unset cb prefixed
+         Unset_CB_Prefixed (GB.CPU);
+      else
+         Instruction_Info := Unprefixed (OPCode);
+      end if;
 
       --  Call the instruction to modifiy the CPU
       Instruction_Info.Instruction (GB.CPU);

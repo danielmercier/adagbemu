@@ -20,10 +20,10 @@ package CPU.Interrupts is
 private
    type Jump_Address_T is array (Interrupt_Enum) of Addr16;
    Jump_Address : constant Jump_Address_T :=
-      (VBlank => 16#0040#,
+      [VBlank => 16#0040#,
        LCDC_Status => 16#0048#,
        Timer_Overflow => 16#0050#,
        Serial_Transfer_Completion => 16#0058#,
-       KeyPad => 16#0060#);
+       KeyPad => 16#0060#];
    procedure Interrupt (CPU : in out CPU_T; Int : Interrupt_Enum);
 end CPU.Interrupts;

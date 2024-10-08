@@ -6,7 +6,7 @@ procedure Test_Decoder is
    GB : GB_T;
 begin
    Init (GB);
-   Load ("mem/mem.dump", GB, 16#0000#);
+   Load ("mem/rom", GB, 16#0000#);
 
    loop
       Emulate_Cycle (GB);

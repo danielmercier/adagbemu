@@ -1,8 +1,6 @@
 with CPU; use CPU;
 
 package OPCodes is
-   Not_Implemented : exception;
-
    procedure OPCode_00 (CPU : in out CPU_T);
    procedure OPCode_01 (CPU : in out CPU_T);
    procedure OPCode_02 (CPU : in out CPU_T);
@@ -505,6 +503,4 @@ package OPCodes is
    procedure CB_OPCode_FD (CPU : in out CPU_T);
    procedure CB_OPCode_FE (CPU : in out CPU_T);
    procedure CB_OPCode_FF (CPU : in out CPU_T);
-private
-   procedure Unimplemented (CPU : CPU_T);
 end OPCodes;

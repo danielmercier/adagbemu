@@ -25,4 +25,11 @@ package HAL is
 
    function To_Word is new Ada.Unchecked_Conversion (Uint16, Word);
    function From_Word is new Ada.Unchecked_Conversion (Word, Uint16);
+
+   subtype Bit_Index is Uint8 range 0 .. 7;
+   type Gen_Bitset is array (Uint8 range <>) of Boolean with Pack;
+   subtype Bitset is Gen_Bitset (Bit_Index);
+
+   function To_Bitset is new Ada.Unchecked_Conversion (Uint8, Bitset);
+   function From_Bitset is new Ada.Unchecked_Conversion (Bitset, Uint8);
 end HAL;

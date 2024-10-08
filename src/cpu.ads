@@ -55,6 +55,15 @@ package CPU is
    procedure Disable_Interrupts (CPU : in out CPU_T);
    --  Master enable interrupts
    procedure Enable_Interrupts (CPU : in out CPU_T);
+   procedure Set_Should_Enable_Interrupts (CPU : in out CPU_T);
+   procedure Unset_Should_Enable_Interrupts (CPU : in out CPU_T);
+   function Should_Enable_Interrupts (CPU : CPU_T) return Boolean;
+
+   function Pending_Interrupt (CPU : CPU_T) return Boolean;
+
+   function Halt_Mode (CPU : CPU_T) return Boolean;
+   procedure Set_Halt_Mode (CPU : in out CPU_T);
+   procedure Unset_Halt_Mode (CPU : in out CPU_T);
 
    --  Return true if the last instruction made a conditional jump
    function Last_Branch_Taken (CPU : CPU_T) return Boolean;
@@ -77,6 +86,10 @@ package CPU is
    function Read_A8 (CPU : in out CPU_T) return Addr8;
    function Read_D16 (CPU : in out CPU_T) return Uint16;
    function Read_A16 (CPU : in out CPU_T) return Addr16;
+
+   function CB_Prefixed (CPU : CPU_T) return Boolean;
+   procedure Set_CB_Prefixed (CPU : in out CPU_T);
+   procedure Unset_CB_Prefixed (CPU : in out CPU_T);
 private
    type Ptr8_T is new Reg8_T;
    type Ptr16_T is new Reg16_T;
@@ -109,8 +122,18 @@ private
 
       Memory : Memory_T;
 
+      --  Next instruction is CB prefixed
+      CB_Prefixed : Boolean := False;
+
       --  Flag to say if interrupts are enabled or not
-      Interrupt_Master_Enable : Boolean := True;
+      Interrupt_Master_Enable : Boolean := False;
+
+      --  Flag to say that interrupts should be enabled after the next
+      --  instruction
+      Should_Enable_Interrupts : Boolean := False;
+
+      --  The cpu is in a halt mode state and is waiting for an interrupt
+      Halt_Mode : Boolean := False;
 
       --  Used to signal that the last instruction made a conditional jump
       Last_Branch_Taken : Boolean := False;

@@ -9,10 +9,11 @@ with Ada.Real_Time; use Ada.Real_Time;
 
 with GPU.Render;
 with GB; use GB;
+with Decoder; use Decoder;
 
 procedure Main is
    Next    : Time;
-   Period  : constant Time_Span := Milliseconds (40);
+   Period  : constant Time_Span := Nanoseconds (1);
 
    --  reference to the application window
    Window   : SDL.Video.Windows.Window;
@@ -23,6 +24,15 @@ procedure Main is
 
    GB : GB_T;
 
+   task GPU_Renderer;
+
+   task body GPU_Renderer is
+   begin
+      while not Finish loop
+         GPU.Render.Render (GB);
+      end loop;
+   end GPU_Renderer;
+
    procedure Finalize is
    begin
       Finalize (GB);
@@ -31,13 +41,12 @@ procedure Main is
    end Finalize;
 begin
    Init (GB);
+
    if not SDL_Renderer.Init (Window, Renderer) then
       Finalize;
 
       return;
    end if;
-
-   GB.Main_Clock.Set_Never_Wait (True);
 
    Next := Clock + Period;
 
@@ -52,11 +61,13 @@ begin
          end if;
       end loop;
 
-      GPU.Render.Render (GB);
+      Emulate_Cycle (GB);
 
-      delay until Next;
+      --delay until Next;
       Next := Next + Period;
    end loop;
+
+   GB.Main_Clock.Set_Never_Wait (True);
 
    Finalize;
 end Main;

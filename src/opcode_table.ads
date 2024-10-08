@@ -25,7 +25,7 @@ package OPCode_Table is
    type Table_T is array (OPCode_T) of Instruction_Info_T;
 
    Unprefixed : constant Table_T :=
-      (16#00# => (new Cycles_Rec'(False, 4), OPCode_00'Access),
+      [16#00# => (new Cycles_Rec'(False, 4000), OPCode_00'Access),
        16#01# => (new Cycles_Rec'(False, 12), OPCode_01'Access),
        16#02# => (new Cycles_Rec'(False, 8), OPCode_02'Access),
        16#03# => (new Cycles_Rec'(False, 8), OPCode_03'Access),
@@ -270,10 +270,10 @@ package OPCode_Table is
        16#FB# => (new Cycles_Rec'(False, 4), OPCode_FB'Access),
        16#FE# => (new Cycles_Rec'(False, 8), OPCode_FE'Access),
        16#FF# => (new Cycles_Rec'(False, 16), OPCode_FF'Access),
-       others => (null, null));
+       others => (null, null)];
 
    CBprefixed : constant Table_T :=
-      (16#00# => (new Cycles_Rec'(False, 8), CB_OPCode_00'Access),
+      [16#00# => (new Cycles_Rec'(False, 8), CB_OPCode_00'Access),
        16#01# => (new Cycles_Rec'(False, 8), CB_OPCode_01'Access),
        16#02# => (new Cycles_Rec'(False, 8), CB_OPCode_02'Access),
        16#03# => (new Cycles_Rec'(False, 8), CB_OPCode_03'Access),
@@ -529,5 +529,5 @@ package OPCode_Table is
        16#FD# => (new Cycles_Rec'(False, 8), CB_OPCode_FD'Access),
        16#FE# => (new Cycles_Rec'(False, 16), CB_OPCode_FE'Access),
        16#FF# => (new Cycles_Rec'(False, 8), CB_OPCode_FF'Access),
-       others => (null, null));
+       others => (null, null)];
 end OPCode_Table;

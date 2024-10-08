@@ -1,5 +1,6 @@
 with Ada.Unchecked_Conversion;
 with Interfaces; use Interfaces;
+with MMU.Registers; use MMU.Registers;
 
 package body CPU is
    function "+" (R : Reg8_T) return Ptr8_T is
@@ -17,11 +18,11 @@ package body CPU is
       CPU.Memory := Mem;
 
       CPU.Registers.Regs16 :=
-         (AF => 16#01B0#,
+         [AF => 16#01B0#,
           BC => 16#0013#,
           DE => 16#00D8#,
           HL => 16#014D#,
-          SP => 16#FFFE#);
+          SP => 16#FFFE#];
 
       CPU.Program_Counter := 16#0100#;
    end Init;
@@ -131,6 +132,46 @@ package body CPU is
       CPU.Interrupt_Master_Enable := True;
    end Enable_Interrupts;
 
+   procedure Set_Should_Enable_Interrupts (CPU : in out CPU_T) is
+   begin
+      CPU.Should_Enable_Interrupts := True;
+   end Set_Should_Enable_Interrupts;
+
+   procedure Unset_Should_Enable_Interrupts (CPU : in out CPU_T) is
+   begin
+      CPU.Should_Enable_Interrupts := False;
+   end Unset_Should_Enable_Interrupts;
+
+   function Should_Enable_Interrupts (CPU : CPU_T) return Boolean is
+   begin
+      return CPU.Should_Enable_Interrupts;
+   end Should_Enable_Interrupts;
+
+   function Halt_Mode (CPU : CPU_T) return Boolean is
+   begin
+      return CPU.Halt_Mode;
+   end Halt_Mode;
+
+   procedure Set_Halt_Mode (CPU : in out CPU_T) is
+   begin
+      CPU.Halt_Mode := True;
+   end Set_Halt_Mode;
+
+   function Pending_Interrupt (CPU : CPU_T) return Boolean is
+      Interrupt_IF : constant Interrupt_Array := IFF (CPU.Memory);
+      Interrupt_IE : constant Interrupt_Array := IE (CPU.Memory);
+   begin
+      return
+         (for some I in Interrupt_Array'Range =>
+            Interrupt_IE (I) or else Interrupt_IF (I)
+         );
+   end Pending_Interrupt;
+
+   procedure Unset_Halt_Mode (CPU : in out CPU_T) is
+   begin
+      CPU.Halt_Mode := False;
+   end Unset_Halt_Mode;
+
    function Last_Branch_Taken (CPU : CPU_T) return Boolean is
    begin
       return CPU.Last_Branch_Taken;
@@ -210,4 +251,19 @@ package body CPU is
    begin
       return Addr16 (Read_D16 (CPU));
    end Read_A16;
+
+   function CB_Prefixed (CPU : CPU_T) return Boolean is
+   begin
+      return CPU.CB_Prefixed;
+   end CB_Prefixed;
+
+   procedure Set_CB_Prefixed (CPU : in out CPU_T) is
+   begin
+      CPU.CB_Prefixed := True;
+   end Set_CB_Prefixed;
+
+   procedure Unset_CB_Prefixed (CPU : in out CPU_T) is
+   begin
+      CPU.CB_Prefixed := False;
+   end Unset_CB_Prefixed;
 end CPU;
