@@ -2,6 +2,10 @@ package body CPU.Interrupts is
    procedure Handle_Interrupts (CPU : in out CPU_T) is
       Interrupt_Flag : constant Interrupt_Array := IFF (CPU.Memory);
    begin
+      if not Debug_Interrupts_Enabled then
+         return;
+      end if;
+
       for Interrupt in Interrupt_Enum loop
          if Interrupt_Flag (Interrupt) then
             Set_IF (CPU.Memory, Interrupt, False);

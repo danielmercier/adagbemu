@@ -1,6 +1,9 @@
 with MMU.Registers; use MMU.Registers;
 
 package CPU.Interrupts is
+   --  Only used for testing to disable interrupts
+   Debug_Interrupts_Enabled : Boolean := True;
+
    procedure Handle_Interrupts (CPU : in out CPU_T);
 
    --  Following procedure should be called whenever the given interrupt

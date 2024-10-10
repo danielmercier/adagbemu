@@ -6,7 +6,7 @@ package Mnemonic_Table is
    type Table_T is array (OPCode_T) of Unbounded_String;
 
    Unprefixed : constant Table_T :=
-      (16#00# => To_Unbounded_String ("NOP"),
+      [16#00# => To_Unbounded_String ("NOP"),
        16#01# => To_Unbounded_String ("LD BC, d16"),
        16#02# => To_Unbounded_String ("LD (BC), A"),
        16#03# => To_Unbounded_String ("INC BC"),
@@ -251,10 +251,10 @@ package Mnemonic_Table is
        16#FB# => To_Unbounded_String ("EI"),
        16#FE# => To_Unbounded_String ("CP d8"),
        16#FF# => To_Unbounded_String ("RST 38H"),
-       others => To_Unbounded_String ("UNKNOWN"));
+       others => To_Unbounded_String ("UNKNOWN")];
 
    CBprefixed : constant Table_T :=
-      (16#00# => To_Unbounded_String ("RLC B"),
+      [16#00# => To_Unbounded_String ("RLC B"),
        16#01# => To_Unbounded_String ("RLC C"),
        16#02# => To_Unbounded_String ("RLC D"),
        16#03# => To_Unbounded_String ("RLC E"),
@@ -510,5 +510,5 @@ package Mnemonic_Table is
        16#FD# => To_Unbounded_String ("SET 7, L"),
        16#FE# => To_Unbounded_String ("SET 7, (HL)"),
        16#FF# => To_Unbounded_String ("SET 7, A"),
-       others => To_Unbounded_String ("UNKNOWN"));
+       others => To_Unbounded_String ("UNKNOWN")];
 end Mnemonic_Table;

@@ -1,0 +1,15 @@
+with "../config/adagbemu_config.gpr";
+with "../adagbemu.gpr";
+
+project Test is
+   for Languages use ("Ada", "C");
+
+   for Source_Dirs use (".", "../gbit", "../gbit/lib");
+   for Object_Dir use "../obj/" & AdaGBEmu_Config.Build_Profile;
+   for Main use ("test_adagbemu.c");
+
+   package Compiler is
+      for Default_Switches ("Ada") use AdaGBEmu_Config.Ada_Compiler_Switches &
+         ("-gnat2022", "-gnatyM120");
+   end Compiler;
+end Test;

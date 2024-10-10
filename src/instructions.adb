@@ -1,12 +1,11 @@
 with Ada.Unchecked_Conversion;
 with Interfaces; use Interfaces;
-with CPU.Logger; use CPU.Logger;
 
 package body Instructions is
    function Check_Half_Carry (Left, Right : Uint16) return Boolean is
    begin
-      return (((Left and 16#00FF#) + (Right and 16#00FF#)) and 16#0100#)
-             = 16#0100#;
+      return (((Left and 16#0FFF#) + (Right and 16#0FFF#)) and 16#1000#)
+             = 16#1000#;
    end Check_Half_Carry;
 
    function Check_Half_Carry (Left, Right : Uint8) return Boolean is
@@ -16,8 +15,8 @@ package body Instructions is
 
    function Check_Sub_Half_Carry (Left, Right : Uint16) return Boolean is
    begin
-      return (((Left and 16#00FF#) - (Right and 16#00FF#)) and 16#0100#)
-             = 16#0100#;
+      return (((Left and 16#0FFF#) - (Right and 16#0FFF#)) and 16#1000#)
+             = 16#1000#;
    end Check_Sub_Half_Carry;
 
    function Check_Sub_Half_Carry (Left, Right : Uint8) return Boolean is
@@ -25,9 +24,9 @@ package body Instructions is
       return (((Left and 16#0F#) - (Right and 16#0F#)) and 16#10#) = 16#10#;
    end Check_Sub_Half_Carry;
 
-   function Rotate_Left (I : Uint8) return Uint8 is
+   function Rotate_Left (I : Uint8; Amount : Natural := 1) return Uint8 is
    begin
-      return Uint8 (Rotate_Left (Unsigned_8 (I), 1));
+      return Uint8 (Rotate_Left (Unsigned_8 (I), Amount));
    end Rotate_Left;
 
    function Rotate_Right (I : Uint8) return Uint8 is
@@ -146,6 +145,26 @@ package body Instructions is
       Set_Reg (CPU, Dest, Reg (CPU, Src));
    end LD;
 
+   procedure LDHL (CPU : in out CPU_T; I : Int8) is
+      function To_Uint8 is new Ada.Unchecked_Conversion (Int8, Uint8);
+
+      Operand : constant Uint16 := Reg (CPU, SP);
+      Result : constant Uint16 :=
+         (if I >= 0 then Operand + Uint16 (I) else Operand - Uint16 (-I));
+      UI : constant Uint16 := Uint16 (To_Uint8 (I));
+      HF : constant Boolean :=
+         (Operand and 16#F#) + (UI and 16#F#) > 16#F#;
+      CF : constant Boolean :=
+         (Operand and 16#FF#) + (UI and 16#FF#) > 16#FF#;
+   begin
+      Set_Reg (CPU, HL, Result);
+
+      Set_Flag (CPU, Z, False);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, HF);
+      Set_Flag (CPU, C, CF);
+   end LDHL;
+
    procedure PUSH (CPU : in out CPU_T; R : Reg16_T) is
    begin
       Push (CPU, Reg (CPU, R));
@@ -186,7 +205,7 @@ package body Instructions is
    end Call_If;
 
    procedure CALL (CPU : in out CPU_T; Loc : Addr16) is
-      Ret : constant Addr16 := Get_PC (CPU) + 1;
+      Ret : constant Addr16 := Get_PC (CPU);
    begin
       --  Push return address on top of the stack
       Push (CPU, Ret);
@@ -218,9 +237,14 @@ package body Instructions is
    end JP;
 
    procedure JR (CPU : in out CPU_T; Offs : Int8) is
-      New_Loc : constant Addr16 :=
-         Addr16 (Integer (Get_PC (CPU)) + Integer (Offs));
+      New_Loc : Addr16 := Get_PC (CPU);
    begin
+      if Offs >= 0 then
+         New_Loc := New_Loc + Addr16 (Offs);
+      else
+         New_Loc := New_Loc - Addr16 (-Offs);
+      end if;
+
       JP (CPU, New_Loc);
    end JR;
 
@@ -265,7 +289,7 @@ package body Instructions is
       Set_Flag (CPU, Z, Reg (CPU, Left) = 0);
       Set_Flag (CPU, N, False);
       Set_Flag (CPU, H, Check_Half_Carry (LVal, RVal));
-      Set_Flag (CPU, C, LVal > RVal - Uint8'Last);
+      Set_Flag (CPU, C, LVal > Uint8'Last - RVal);
    end ADD;
 
    procedure ADD (CPU : in out CPU_T; Left : Reg8_T; Right : Reg8_T) is
@@ -282,6 +306,9 @@ package body Instructions is
    begin
       if Flag (CPU, C) then
          ADD (CPU, Left, Right + 1);
+
+         Set_Flag (CPU, C, Right = Uint8'Last or else Flag (CPU, C));
+         Set_Flag (CPU, H, Check_Half_Carry (Right, 1) or else Flag (CPU, H));
       else
          ADD (CPU, Left, Right);
       end if;
@@ -300,9 +327,10 @@ package body Instructions is
    procedure SUB (CPU : in out CPU_T; Left : Reg8_T; Right : Uint8) is
       LVal : constant Uint8 := Reg (CPU, Left);
       RVal : constant Uint8 := Right;
+      Result : constant Uint8 := LVal - RVal;
    begin
-      Set_Reg (CPU, Left, LVal + RVal);
-      Set_Flag (CPU, Z, Reg (CPU, Left) = 0);
+      Set_Reg (CPU, Left, Result);
+      Set_Flag (CPU, Z, Result = 0);
       Set_Flag (CPU, N, True);
       Set_Flag (CPU, H, Check_Sub_Half_Carry (LVal, RVal));
       Set_Flag (CPU, C, LVal < RVal);
@@ -326,7 +354,11 @@ package body Instructions is
    procedure SBC (CPU : in out CPU_T; Left : Reg8_T; Right : Uint8) is
    begin
       if Flag (CPU, C) then
-         SUB (CPU, Left, Right - 1);
+         SUB (CPU, Left, Right + 1);
+
+         Set_Flag (CPU, C, Right = Uint8'Last or else Flag (CPU, C));
+         Set_Flag (CPU, H, Check_Half_Carry (Right, 1)
+                           or else Flag (CPU, H));
       else
          SUB (CPU, Left, Right);
       end if;
@@ -421,36 +453,40 @@ package body Instructions is
 
    procedure INC (CPU : in out CPU_T; R : Reg8_T) is
       Val : constant Uint8 := Reg (CPU, R);
+      Result : constant Uint8 := Val + 1;
    begin
-      Set_Reg (CPU, R, Val + 1);
-      Set_Flag (CPU, Z, Reg (CPU, R) = 0);
+      Set_Reg (CPU, R, Result);
+      Set_Flag (CPU, Z, Result = 0);
       Set_Flag (CPU, N, False);
       Set_Flag (CPU, H, Check_Half_Carry (Val, 1));
    end INC;
 
    procedure INC (CPU : in out CPU_T; P : Ptr16_T) is
       Val : constant Uint8 := Mem (CPU, P);
+      Result : constant Uint8 := Val + 1;
    begin
-      Set_Mem (CPU, P, Val + 1);
-      Set_Flag (CPU, Z, Mem (CPU, P) = 0);
+      Set_Mem (CPU, P, Result);
+      Set_Flag (CPU, Z, Result = 0);
       Set_Flag (CPU, N, False);
       Set_Flag (CPU, H, Check_Half_Carry (Val, 1));
    end INC;
 
    procedure DEC (CPU : in out CPU_T; R : Reg8_T) is
       Val : constant Uint8 := Reg (CPU, R);
+      Result : constant Uint8 := Val - 1;
    begin
-      Set_Reg (CPU, R, Val - 1);
-      Set_Flag (CPU, Z, Reg (CPU, R) = 0);
+      Set_Reg (CPU, R, Result);
+      Set_Flag (CPU, Z, Result = 0);
       Set_Flag (CPU, N, True);
       Set_Flag (CPU, H, Check_Sub_Half_Carry (Val, 1));
    end DEC;
 
    procedure DEC (CPU : in out CPU_T; P : Ptr16_T) is
       Val : constant Uint8 := Mem (CPU, P);
+      Result : constant Uint8 := Val - 1;
    begin
-      Set_Mem (CPU, P, Val - 1);
-      Set_Flag (CPU, Z, Mem (CPU, P) = 0);
+      Set_Mem (CPU, P, Result);
+      Set_Flag (CPU, Z, Result = 0);
       Set_Flag (CPU, N, True);
       Set_Flag (CPU, H, Check_Sub_Half_Carry (Val, 1));
    end DEC;
@@ -462,7 +498,7 @@ package body Instructions is
       Set_Reg (CPU, Left, LVal + RVal);
       Set_Flag (CPU, N, False);
       Set_Flag (CPU, H, Check_Half_Carry (LVal, RVal));
-      Set_Flag (CPU, C, LVal > RVal - Uint16'Last);
+      Set_Flag (CPU, C, LVal > Uint16'Last - RVal);
    end ADD;
 
    procedure ADD (CPU : in out CPU_T; Left : Reg16_T; Right : Reg16_T) is
@@ -471,38 +507,36 @@ package body Instructions is
    end ADD;
 
    procedure ADD (CPU : in out CPU_T; Left : Reg16_T; Right : Int8) is
-      function Convert is new Ada.Unchecked_Conversion (Int16, Uint16);
-      function Convert is new Ada.Unchecked_Conversion (Integer, Unsigned_32);
+      function To_Uint8 is new Ada.Unchecked_Conversion (Int8, Uint8);
 
       LVal : constant Uint16 := Reg (CPU, Left);
-      RVal : constant Int16 := Int16 (Right);
-      Result : constant Integer := Integer (LVal) + Integer (RVal);
-      U32 : constant Unsigned_32 := Convert (Result);
+      URight : constant Uint16 := Uint16 (To_Uint8 (Right));
+      Result : constant Uint16 :=
+         (if Right >= 0 then
+            LVal + Uint16 (Right)
+          else
+            LVal - Uint16 (-Right));
+      HF : constant Boolean :=
+         (LVal and 16#F#) + (URight and 16#F#) > 16#F#;
+      CF : constant Boolean :=
+         (LVal and 16#FF#) + (URight and 16#FF#) > 16#FF#;
    begin
-      Set_Reg (CPU, Left, Uint16 (U32 and 16#FFFF#));
+      Set_Reg (CPU, Left, Result);
+
       Set_Flag (CPU, Z, False);
       Set_Flag (CPU, N, False);
-      Set_Flag (CPU, H, Check_Half_Carry (LVal, Convert (RVal)));
-      --  TODO: not sure about what should be the carry for this one
-      Set_Flag (CPU, C, Result > Integer (Uint16'Last));
+      Set_Flag (CPU, H, HF);
+      Set_Flag (CPU, C, CF);
    end ADD;
 
    procedure INC (CPU : in out CPU_T; R : Reg16_T) is
-      Val : constant Uint16 := Reg (CPU, R);
    begin
-      Set_Reg (CPU, R, Val + 1);
-      Set_Flag (CPU, Z, Reg (CPU, R) = 0);
-      Set_Flag (CPU, N, False);
-      Set_Flag (CPU, H, Check_Half_Carry (Val, 1));
+      Set_Reg (CPU, R, Reg (CPU, R) + 1);
    end INC;
 
    procedure DEC (CPU : in out CPU_T; R : Reg16_T) is
-      Val : constant Uint16 := Reg (CPU, R);
    begin
-      Set_Reg (CPU, R, Val - 1);
-      Set_Flag (CPU, Z, Reg (CPU, R) = 0);
-      Set_Flag (CPU, N, True);
-      Set_Flag (CPU, H, Check_Sub_Half_Carry (Val, 1));
+      Set_Reg (CPU, R, Reg (CPU, R) - 1);
    end DEC;
 
    --  Bit Operations instructions
@@ -551,27 +585,25 @@ package body Instructions is
       Set_Mem (CPU, P, Set (U, Mem (CPU, P), True));
    end SET;
 
-   --  Useful for swapping the 4 upper bits with lower 4
-   subtype Half_Bitset is Gen_Bitset (0 .. 3);
-
-   function Swap (X : Uint8) return Uint8 is
-      A : Bitset := To_Bitset (X);
-      Tmp : constant Half_Bitset := A (0 .. 3);
+   function Swap (CPU : in out CPU_T; X : Uint8) return Uint8 is
+      Result : constant Uint8 := Rotate_Left (X, 4);
    begin
-      A (0 .. 3) := A (4 .. 7);
-      A (4 .. 7) := Tmp;
+      Set_Flag (CPU, Z, Result = 0);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, False);
+      Set_Flag (CPU, C, False);
 
-      return From_Bitset (A);
+      return Result;
    end Swap;
 
    procedure SWAP (CPU : in out CPU_T; R : Reg8_T) is
    begin
-      Set_Reg (CPU, R, Swap (Reg (CPU, R)));
+      Set_Reg (CPU, R, Swap (CPU, Reg (CPU, R)));
    end SWAP;
 
    procedure SWAP (CPU : in out CPU_T; P : Ptr16_T) is
    begin
-      Set_Mem (CPU, P, Swap (Mem (CPU, P)));
+      Set_Mem (CPU, P, Swap (CPU, Mem (CPU, P)));
    end SWAP;
 
    --  Bit Shift instructions
@@ -600,6 +632,10 @@ package body Instructions is
    procedure RLCA (CPU : in out CPU_T) is
    begin
       RLC (CPU, A);
+
+      Set_Flag (CPU, Z, False);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, False);
    end RLCA;
 
    function RRC (CPU : in out CPU_T; I : Uint8) return Uint8 is
@@ -627,6 +663,10 @@ package body Instructions is
    procedure RRCA (CPU : in out CPU_T) is
    begin
       RRC (CPU, A);
+
+      Set_Flag (CPU, Z, False);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, False);
    end RRCA;
 
    function RL (CPU : in out CPU_T; I : Uint8) return Uint8 is
@@ -659,6 +699,10 @@ package body Instructions is
    procedure RLA (CPU : in out CPU_T) is
    begin
       RL (CPU, A);
+
+      Set_Flag (CPU, Z, False);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, False);
    end RLA;
 
    function RR (CPU : in out CPU_T; I : Uint8) return Uint8 is
@@ -691,6 +735,10 @@ package body Instructions is
    procedure RRA (CPU : in out CPU_T) is
    begin
       RR (CPU, A);
+
+      Set_Flag (CPU, Z, False);
+      Set_Flag (CPU, N, False);
+      Set_Flag (CPU, H, False);
    end RRA;
 
    function SLA (CPU : in out CPU_T; I : Uint8) return Uint8 is
@@ -774,38 +822,40 @@ package body Instructions is
    procedure CPL (CPU : in out CPU_T) is
    begin
       Set_Reg (CPU, A, not Reg (CPU, A));
+
+      Set_Flag (CPU, N, True);
+      Set_Flag (CPU, H, True);
    end CPL;
 
    procedure DAA (CPU : in out CPU_T) is
-      function Shift_Left (X : Uint16; Amount : Integer) return Uint16 is
-      begin
-         return Uint16 (Shift_Left (Unsigned_16 (X), Amount));
-      end Shift_Left;
-
       Val : Uint8 := Reg (CPU, A);
-      Correction : Uint16 := (if Flag (CPU, C) then 16#60# else 16#00#);
+      Correction : Uint8 := 0;
+      Carry : Boolean := False;
    begin
-      if
-         Flag (CPU, H)
-         or else (not Flag (CPU, N) and then ((Val and 16#0F#) > 9))
+      if Flag (CPU, H)
+         or else (not Flag (CPU, N) and then (Val and 16#F#) > 9)
+      then
+         Correction := Correction or 16#06#;
+      end if;
+
+      if Flag (CPU, C)
+         or else (not Flag (CPU, N) and then (Val > 16#99#))
       then
          Correction := Correction or 16#60#;
+         Carry := True;
       end if;
 
       if Flag (CPU, N) then
-         Val := Uint8 (Uint16 (Val) - Correction);
+         Val := Val - Correction;
       else
-         Val := Uint8 (Uint16 (Val) + Correction);
+         Val := Val + Correction;
       end if;
-
-      if (Shift_Left (Correction, 2) and 16#100#) /= 0 then
-         Set_Flag (CPU, C, True);
-      end if;
-
-      Set_Flag (CPU, H, False);
-      Set_Flag (CPU, Z, Val = 0);
 
       Set_Reg (CPU, A, Val);
+
+      Set_Flag (CPU, Z, Val = 0);
+      Set_Flag (CPU, H, False);
+      Set_Flag (CPU, C, Carry);
    end DAA;
 
    procedure DI (CPU : in out CPU_T) is
@@ -816,7 +866,8 @@ package body Instructions is
 
    procedure EI (CPU : in out CPU_T) is
    begin
-      Set_Should_Enable_Interrupts (CPU);
+      --  Set_Should_Enable_Interrupts (CPU);
+      Enable_Interrupts (CPU);
    end EI;
 
    procedure HALT (CPU : in out CPU_T) is
@@ -840,8 +891,7 @@ package body Instructions is
    procedure STOP (CPU : in out CPU_T; I : Uint8) is
       pragma Unreferenced (I);
    begin
-      Log_Not_Implemented (CPU);
-      Log_CPU_Info (CPU);
+      HALT (CPU);
    end STOP;
 
    procedure PREFIX (CPU : in out CPU_T) is

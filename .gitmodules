@@ -1,0 +1,3 @@
+[submodule "gbit"]
+	path = gbit
+	url = git@github.com:koenk/gbit.git

@@ -12,9 +12,9 @@ package HAL is
    type Int16 is range -2 ** 15 .. 2 ** 15 - 1 with Size => 16;
 
    --  8 bit type used for address
-   type Addr8 is range 0 .. 2 ** 8 - 1 with Size => 8;
+   type Addr8 is new Uint8;
    --  16 bit type used for address
-   type Addr16 is range 0 .. 2 ** 16 - 1 with Size => 16;
+   type Addr16 is new Uint16;
 
    type OPCode_T is new Addr16;
 
@@ -27,8 +27,7 @@ package HAL is
    function From_Word is new Ada.Unchecked_Conversion (Word, Uint16);
 
    subtype Bit_Index is Uint8 range 0 .. 7;
-   type Gen_Bitset is array (Uint8 range <>) of Boolean with Pack;
-   subtype Bitset is Gen_Bitset (Bit_Index);
+   type Bitset is array (Bit_Index) of Boolean with Pack;
 
    function To_Bitset is new Ada.Unchecked_Conversion (Uint8, Bitset);
    function From_Bitset is new Ada.Unchecked_Conversion (Bitset, Uint8);

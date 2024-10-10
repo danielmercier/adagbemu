@@ -28,6 +28,7 @@ package Instructions is
    procedure LD (CPU : in out CPU_T; Dest : Reg16_T; Src : Uint16);
    procedure LD (CPU : in out CPU_T; Dest : Addr16; Src : Reg16_T);
    procedure LD (CPU : in out CPU_T; Dest : Reg16_T; Src : Reg16_T);
+   procedure LDHL (CPU : in out CPU_T; I : Int8);
    procedure PUSH (CPU : in out CPU_T; R : Reg16_T);
    procedure POP (CPU : in out CPU_T; R : Reg16_T);
 

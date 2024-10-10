@@ -14,6 +14,16 @@ You can build the project using alire
 $ alr build
 ```
 
+## Testing CPU without Video
+
+Uses the github project gbit for testing cpu instructions
+
+```sh
+$ alr exec -- gprbuild -P test_instrs/test.gpr
+```
+
+Then run the test_adagbemu binary to see if all tests passes
+
 ## State
 
 Neither the CPU nor the GPU are finished for now. Tasks for both of them do

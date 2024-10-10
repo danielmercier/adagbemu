@@ -42,6 +42,15 @@ package CPU is
    procedure Set_Mem (CPU : in out CPU_T; P : Ptr16_T; V : Uint8);
    procedure Set_Mem (CPU : in out CPU_T; P : Ptr8_T; V : Uint8);
 
+   --  Useful for testing as it sets another memory to read/write
+   type Getter_T is access function (A : Addr16) return Uint8;
+   type Setter_T is access procedure (A : Addr16; V : Uint8);
+
+   procedure Change_Accessors
+      (CPU : in out CPU_T;
+       Getter : Getter_T;
+       Setter : Setter_T);
+
    --  return the current program counter
    function Get_PC (CPU : CPU_T) return Addr16;
    --  increment the current program counter
@@ -137,5 +146,9 @@ private
 
       --  Used to signal that the last instruction made a conditional jump
       Last_Branch_Taken : Boolean := False;
+
+      --  Some info useful for testing
+      Mem_Setter : Setter_T;
+      Mem_Getter : Getter_T;
    end record;
 end CPU;

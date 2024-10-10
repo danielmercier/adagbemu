@@ -1,11 +1,9 @@
 with CPU.Interrupts; use CPU.Interrupts;
 with OPCode_Table; use OPCode_Table;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Decoder is
-   procedure Emulate_Cycle (GB : in out GB_T) is
-      OPCode : constant OPCode_T := Fetch (GB.CPU);
+   function Emulate_Cycle (GB : in out GB_T) return Clock_T is
+      OPCode : OPCode_T;
    begin
       if Halt_Mode (GB.CPU) and then Pending_Interrupt (GB.CPU) then
          --  Resume execution as an interrupt is pending
@@ -17,12 +15,20 @@ package body Decoder is
          Handle_Interrupts (GB.CPU);
       end if;
 
-      if (Halt_Mode (GB.CPU)) then
+      if Halt_Mode (GB.CPU) then
          GB.Main_Clock.Increment;
+         return 1;
       else
+         OPCode := Fetch (GB.CPU);
          Increment_PC (GB.CPU);
-         Decode (GB, OPCode);
+         return Decode (GB, OPCode);
       end if;
+   end Emulate_Cycle;
+
+   procedure Emulate_Cycle (GB : in out GB_T) is
+      Dummy : constant Clock_T := Emulate_Cycle (GB);
+   begin
+      null;
    end Emulate_Cycle;
 
    function Fetch (CPU : CPU_T) return OPCode_T is
@@ -30,7 +36,7 @@ package body Decoder is
       return OPCode_T (Mem (CPU, Get_PC (CPU)));
    end Fetch;
 
-   procedure Decode (GB : in out GB_T; OPCode : OPCode_T) is
+   function Decode (GB : in out GB_T; OPCode : OPCode_T) return Clock_T is
       Instruction_Info : Instruction_Info_T;
    begin
       if Should_Enable_Interrupts (GB.CPU) then
@@ -55,11 +61,14 @@ package body Decoder is
       if Instruction_Info.Cycles.Branch then
          if Last_Branch_Taken (GB.CPU) then
             Handle_Cycles (GB, Instruction_Info.Cycles.Taken);
+            return Instruction_Info.Cycles.Taken;
          else
             Handle_Cycles (GB, Instruction_Info.Cycles.Not_Taken);
+            return Instruction_Info.Cycles.Not_Taken;
          end if;
       else
          Handle_Cycles (GB, Instruction_Info.Cycles.Value);
+         return Instruction_Info.Cycles.Value;
       end if;
    end Decode;
 

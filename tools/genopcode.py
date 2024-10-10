@@ -33,8 +33,6 @@ def ada_operand(operand):
         return "Read_A8 (CPU)"
     elif operand in ["(a16)", "a16"]:
         return "Read_A16 (CPU)"
-    elif operand == "SP+r8":
-        return "Reg (CPU, SP) + Uint16 (Read_R8 (CPU))"
     elif re.match(r"\d+H", operand):
         return "16#{}#".format(operand[:-1])
     else:
@@ -51,6 +49,7 @@ def gen_from_json(procname_prefix, content):
     for x in content:
         addr = int(x["addr"], base=16)
         cycles = x["cycles"]
+        length = x["length"]
 
         instruction_access = "{}_{:02X}'Access".format(procname_prefix, addr)
 
@@ -60,8 +59,8 @@ def gen_from_json(procname_prefix, content):
             cycles_rec = "new Cycles_Rec'(True, {}, {})".format(cycles[0], cycles[1])
 
         print(
-            "       16#{:02X}# => ({}, {}),".format(
-                addr, cycles_rec, instruction_access
+            "       16#{:02X}# => ({}, {}, {}),".format(
+                addr, cycles_rec, length, instruction_access
             )
         )
     print("#################")
@@ -83,7 +82,12 @@ def gen_from_json(procname_prefix, content):
         mnemonic = ada_mnemonic(x["mnemonic"])
         operands = ""
 
-        if mnemonic != "PREFIX":
+        if "operand2" in x and x["operand2"] == "SP+r8":
+            # We use a special mnemonic for this one
+            mnemonic = "LDHL"
+
+            operands = ", {}".format(ada_operand("r8"))
+        elif mnemonic != "PREFIX":
             # Ignore operands for PREFIX
             if "operand1" in x:
                 operands += ", {}".format(ada_operand(x["operand1"]))

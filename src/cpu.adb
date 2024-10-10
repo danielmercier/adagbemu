@@ -54,12 +54,22 @@ package body CPU is
 
    procedure Set_Reg (CPU : in out CPU_T; R : Reg8_T; V : Uint8) is
    begin
-      CPU.Registers.Regs8 (R) := V;
+      if R = F then
+         --  Register F bits 0 .. 3 are always 0
+         CPU.Registers.Regs8 (R) := V and 16#F0#;
+      else
+         CPU.Registers.Regs8 (R) := V;
+      end if;
    end Set_Reg;
 
    procedure Set_Reg (CPU : in out CPU_T; R : Reg16_T; V : Uint16) is
    begin
-      CPU.Registers.Regs16 (R) := V;
+      if R = AF then
+         --  Register F bits 0 .. 3 are always 0
+         CPU.Registers.Regs16 (R) := V and 16#FFF0#;
+      else
+         CPU.Registers.Regs16 (R) := V;
+      end if;
    end Set_Reg;
 
    procedure Set_Reg (CPU : in out CPU_T; R : Ptr16_T; V : Addr16) is
@@ -74,7 +84,11 @@ package body CPU is
 
    function Mem (CPU : CPU_T; A : Addr16) return Uint8 is
    begin
-      return CPU.Memory.Get (A);
+      if CPU.Mem_Getter = null then
+         return CPU.Memory.Get (A);
+      else
+         return CPU.Mem_Getter (A);
+      end if;
    end Mem;
 
    function Mem (CPU : CPU_T; P : Ptr16_T) return Uint8 is
@@ -89,7 +103,11 @@ package body CPU is
 
    procedure Set_Mem (CPU : in out CPU_T; A : Addr16; V : Uint8) is
    begin
-      CPU.Memory.Set (A, V);
+      if CPU.Mem_Setter = null then
+         CPU.Memory.Set (A, V);
+      else
+         CPU.Mem_Setter (A, V);
+      end if;
    end Set_Mem;
 
    procedure Set_Mem (CPU : in out CPU_T; P : Ptr16_T; V : Uint8) is
@@ -101,6 +119,15 @@ package body CPU is
    begin
       Set_Mem (CPU, Reg (CPU, P), V);
    end Set_Mem;
+
+   procedure Change_Accessors
+      (CPU : in out CPU_T;
+       Getter : Getter_T;
+       Setter : Setter_T) is
+   begin
+      CPU.Mem_Getter := Getter;
+      CPU.Mem_Setter := Setter;
+   end Change_Accessors;
 
    function Get_PC (CPU : CPU_T) return Addr16 is
    begin
@@ -202,6 +229,7 @@ package body CPU is
    begin
       Result (Lo) := Mem (CPU, Stack_Pointer);
       Result (Hi) := Mem (CPU, Stack_Pointer + 1);
+
       Set_Reg (CPU, SP, Stack_Pointer + 2);
       return From_Word (Result);
    end Pop;

@@ -1,5 +1,3 @@
-with HAL; use HAL;
-with CPU.Logger; use CPU.Logger;
 with Instructions; use Instructions;
 
 package body OPCodes is
@@ -1020,7 +1018,7 @@ package body OPCodes is
 
    procedure OPCode_CB (CPU : in out CPU_T) is
    begin
-      NOP (CPU);
+      PREFIX (CPU);
    end OPCode_CB;
 
    procedure OPCode_CC (CPU : in out CPU_T) is
@@ -1200,7 +1198,7 @@ package body OPCodes is
 
    procedure OPCode_F8 (CPU : in out CPU_T) is
    begin
-      LD (CPU, HL, Reg (CPU, SP) + Uint16 (Read_R8 (CPU)));
+      LDHL (CPU, Read_R8 (CPU));
    end OPCode_F8;
 
    procedure OPCode_F9 (CPU : in out CPU_T) is
