@@ -34,10 +34,10 @@ package body PPU.Render is
    end Render;
 
    task body PPU_Renderer_T is
-      GB : GB_Access;
+      GB : GB_P;
       Finish : Boolean := False;
    begin
-      accept Start (GB_In : GB_Access) do
+      accept Start (GB_In : GB_P) do
          GB := GB_In;
       end Start;
 

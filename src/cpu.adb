@@ -102,11 +102,17 @@ package body CPU is
    end Mem;
 
    procedure Set_Mem (CPU : in out CPU_T; A : Addr16; V : Uint8) is
+      To_Write : Uint8 := V;
    begin
+      if A = DIV then
+         --  Any write to the DIV register sets it to 0
+         To_Write := 0;
+      end if;
+
       if CPU.Mem_Setter = null then
-         CPU.Memory.Set (A, V);
+         CPU.Memory.Set (A, To_Write);
       else
-         CPU.Mem_Setter (A, V);
+         CPU.Mem_Setter (A, To_Write);
       end if;
    end Set_Mem;
 

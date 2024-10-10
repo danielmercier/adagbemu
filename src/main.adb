@@ -7,7 +7,10 @@ with SDL_Renderer;
 
 with Ada.Real_Time; use Ada.Real_Time;
 
+with HAL; use HAL;
+
 with PPU.Render;
+with Timer;
 with Loader; use Loader;
 with GB; use GB;
 with Decoder; use Decoder;
@@ -25,11 +28,13 @@ procedure Main is
 
    GB : aliased GB_T;
    PPU_Renderer : PPU.Render.PPU_Renderer_T;
+   --  Timer_Task : Timer.Timer_T;
 
    procedure Finalize is
    begin
       Set_Never_Wait (GB);
       PPU_Renderer.Quit;
+      --  Timer_Task.Quit;
       Window.Finalize;
       SDL.Finalise;
       Finalize (GB);
@@ -45,6 +50,7 @@ begin
    end if;
 
    PPU_Renderer.Start (GB'Unchecked_Access);
+   --  Timer_Task.Start (GB'Unchecked_Access);
    Next := Clock + Period;
 
    while not Finish loop
@@ -58,9 +64,15 @@ begin
          end if;
       end loop;
 
-      while Clock < Next - Milliseconds (1) loop
-         --  Avoid looping until next here or we're going to get out of sync
-         Emulate_Cycle (GB);
+      while Clock < Next loop
+         declare
+            Cycle_Start : constant Time := Clock;
+            Cycles : constant Clock_T := Emulate_Cycle (GB);
+            Cycle_Next : constant Time :=
+               Cycle_Start + Nanoseconds (50) * Integer (Cycles);
+         begin
+            delay until Cycle_Next;
+         end;
       end loop;
 
       delay until Next;

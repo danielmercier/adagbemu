@@ -2,6 +2,8 @@ with Ada.Unchecked_Deallocation;
 
 with Loader; use Loader;
 
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body GB is
    procedure Set_Never_Wait (GB : in out GB_T) is
    begin
@@ -42,6 +44,10 @@ package body GB is
 
       procedure Will_Wait (Amount : Clock_T) is
       begin
+         if Clock >= 16#FF# then
+            Put_Line ("DIVERGING!!!");
+         end if;
+
          Waiting_Amount := Amount;
 
          if not Never_Wait then
