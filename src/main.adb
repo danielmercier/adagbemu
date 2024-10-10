@@ -7,7 +7,7 @@ with SDL_Renderer;
 
 with Ada.Real_Time; use Ada.Real_Time;
 
-with GPU.Render;
+with PPU.Render;
 with Loader; use Loader;
 with GB; use GB;
 with Decoder; use Decoder;
@@ -25,19 +25,19 @@ procedure Main is
 
    GB : GB_T;
 
-   task GPU_Renderer is
+   task PPU_Renderer is
       entry Start;
-   end GPU_Renderer;
+   end PPU_Renderer;
 
-   task body GPU_Renderer is
+   task body PPU_Renderer is
    begin
       accept Start;
 
       while not Finish loop
-         GPU.Render.Render (GB);
+         PPU.Render.Render (GB);
          null;
       end loop;
-   end GPU_Renderer;
+   end PPU_Renderer;
 
    procedure Finalize is
    begin
@@ -55,7 +55,7 @@ begin
       return;
    end if;
 
-   GPU_Renderer.Start;
+   PPU_Renderer.Start;
    Next := Clock + Period;
 
    while not Finish loop

@@ -1,7 +1,7 @@
 with HAL; use HAL;
 with MMU; use MMU;
 with CPU; use CPU;
-with GPU; use GPU;
+with PPU; use PPU;
 
 package GB is
    protected type Clock_Waiter_T is

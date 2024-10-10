@@ -1,6 +1,6 @@
 with Ada.Unchecked_Conversion;
 
-package body GPU is
+package body PPU is
    function To_Signed_Tile_Pattern (U : Uint8) return Signed_Tile_Pattern is
       function Convert is new Ada.Unchecked_Conversion
          (Uint8, Signed_Tile_Pattern);
@@ -123,4 +123,4 @@ package body GPU is
          X_In_Grid := Tile_Grid_X (Pixel_X / Tile_Size_X);
       end loop;
    end Renderscan;
-end GPU;
+end PPU;

@@ -11,7 +11,7 @@ with HAL; use HAL;
 with GB; use GB;
 with MMU; use MMU;
 with MMU.Registers; use MMU.Registers;
-with GPU.Render;
+with PPU.Render;
 
 procedure Test_Scroll is
    Next    : Time;
@@ -107,7 +107,7 @@ begin
          end if;
       end loop;
 
-      GPU.Render.Render (GB);
+      PPU.Render.Render (GB);
 
       delay until Next;
       Next := Next + Period;

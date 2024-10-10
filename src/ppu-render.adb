@@ -1,4 +1,4 @@
-package body GPU.Render is
+package body PPU.Render is
    procedure Render (GB : in out GB_T) is
    begin
       for Y in Screen_Y loop
@@ -32,4 +32,4 @@ package body GPU.Render is
       --  Vertical blank finished, can reset ly
       Reset_LY (GB.Memory);
    end Render;
-end GPU.Render;
+end PPU.Render;

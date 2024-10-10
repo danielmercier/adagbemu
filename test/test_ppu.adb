@@ -8,9 +8,9 @@ with SDL_Renderer;
 with Ada.Real_Time; use Ada.Real_Time;
 
 with GB; use GB;
-with GPU.Render;
+with PPU.Render;
 
-procedure Test_GPU is
+procedure Test_PPU is
    Next    : Time;
    Period  : constant Time_Span := Milliseconds (40);
 
@@ -44,9 +44,9 @@ begin
          end if;
       end loop;
 
-      GPU.Render.Render (GB);
+      PPU.Render.Render (GB);
 
       delay until Next;
       Next := Next + Period;
    end loop;
-end Test_GPU;
+end Test_PPU;

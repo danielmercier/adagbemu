@@ -2,7 +2,7 @@ with HAL; use HAL;
 with MMU; use MMU;
 with MMU.Registers; use MMU.Registers;
 
-package GPU is
+package PPU is
    --  The color of a pixel (the palette will decide the real color)
    type Pixel_Color is range 0 .. 3;
 
@@ -84,4 +84,4 @@ package GPU is
        LCDC : LCDC_T;
        Scroll_X : Screen_Background_X;
        Scroll_Y : Screen_Background_Y);
-end GPU;
+end PPU;

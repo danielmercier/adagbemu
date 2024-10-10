@@ -2,7 +2,7 @@ with SDL.Video.Renderers;
 with SDL.Video.Windows;
 
 with GB; use GB;
-with GPU; use GPU;
+with PPU; use PPU;
 
 package SDL_Renderer is
    Pixel_Size : constant := 2;
