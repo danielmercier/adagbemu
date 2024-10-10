@@ -23,31 +23,20 @@ procedure Main is
 
    Finish : Boolean := False;
 
-   GB : GB_T;
-
-   task PPU_Renderer is
-      entry Start;
-   end PPU_Renderer;
-
-   task body PPU_Renderer is
-   begin
-      accept Start;
-
-      while not Finish loop
-         PPU.Render.Render (GB);
-         null;
-      end loop;
-   end PPU_Renderer;
+   GB : aliased GB_T;
+   PPU_Renderer : PPU.Render.PPU_Renderer_T;
 
    procedure Finalize is
    begin
-      Finalize (GB);
+      Set_Never_Wait (GB);
+      PPU_Renderer.Quit;
       Window.Finalize;
       SDL.Finalise;
+      Finalize (GB);
    end Finalize;
 begin
    Init (GB);
-   Load ("/home/mercier/personal/age-test-roms/ly/ly-dmgC-cgbBC.gb", GB, 16#0000#);
+   Load ("mem/cpu_instrs.gb", GB, 16#0000#);
 
    if not SDL_Renderer.Init (Window, Renderer) then
       Finalize;
@@ -55,7 +44,7 @@ begin
       return;
    end if;
 
-   PPU_Renderer.Start;
+   PPU_Renderer.Start (GB'Unchecked_Access);
    Next := Clock + Period;
 
    while not Finish loop
@@ -77,8 +66,6 @@ begin
       delay until Next;
       Next := Next + Period;
    end loop;
-
-   GB.Main_Clock.Set_Never_Wait (True);
 
    Finalize;
 end Main;

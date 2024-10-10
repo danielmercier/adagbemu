@@ -5,8 +5,7 @@ with PPU; use PPU;
 
 package GB is
    protected type Clock_Waiter_T is
-      procedure Add (Amount : Clock_T);
-      procedure Increment;
+      procedure Increment (Amount : Clock_T);
 
       --  Set this to never wait when calling Wait
       procedure Set_Never_Wait (B : Boolean);
@@ -20,14 +19,20 @@ package GB is
       Never_Wait : Boolean := False;
    end Clock_Waiter_T;
 
+   type Clock_Waiter_Enum is (CW_PPU);
+   type Clock_Waiters_T is array (Clock_Waiter_Enum) of Clock_Waiter_T;
+
    type GB_T is limited record
       Memory : Memory_T;
       CPU : CPU_T;
 
-      Main_Clock : Clock_Waiter_T;
+      Clock_Waiters : Clock_Waiters_T;
 
       Screen : Screen_T;
    end record;
+
+   procedure Set_Never_Wait (GB : in out GB_T);
+   procedure Increment_Clocks (GB : in out GB_T; Amount : Clock_T := 1);
 
    procedure Init (GB : out GB_T);
    procedure Finalize (GB : in out GB_T);

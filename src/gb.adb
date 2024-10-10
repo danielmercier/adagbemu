@@ -3,6 +3,20 @@ with Ada.Unchecked_Deallocation;
 with Loader; use Loader;
 
 package body GB is
+   procedure Set_Never_Wait (GB : in out GB_T) is
+   begin
+      for C of GB.Clock_Waiters loop
+         C.Set_Never_Wait (True);
+      end loop;
+   end Set_Never_Wait;
+
+   procedure Increment_Clocks (GB : in out GB_T; Amount : Clock_T := 1) is
+   begin
+      for C of GB.Clock_Waiters loop
+         C.Increment (Amount);
+      end loop;
+   end Increment_Clocks;
+
    procedure Init (GB : out GB_T) is
    begin
       GB.Memory := new Memory_P;
@@ -18,17 +32,12 @@ package body GB is
    end Finalize;
 
    protected body Clock_Waiter_T is
-      procedure Add (Amount : Clock_T) is
+      procedure Increment (Amount : Clock_T) is
       begin
          Clock := Clock + Amount;
          if Clock >= Waiting_Amount then
             Is_Ok := True;
          end if;
-      end Add;
-
-      procedure Increment is
-      begin
-         Add (1);
       end Increment;
 
       procedure Will_Wait (Amount : Clock_T) is

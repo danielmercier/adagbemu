@@ -10,4 +10,12 @@ package PPU.Render is
 
    --  Use timings to render the screen. Also update
    procedure Render (GB : in out GB_T);
+
+   type GB_Access is access all GB_T;
+
+   task type PPU_Renderer_T is
+      entry Start (GB_In : GB_Access);
+      entry Quit;
+   end PPU_Renderer_T;
+
 end PPU.Render;

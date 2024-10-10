@@ -22,7 +22,7 @@ procedure Test_Scroll is
    Renderer : SDL.Video.Renderers.Renderer;
    Event : SDL.Events.Events.Events;
 
-   GB : GB_T;
+   GB : aliased GB_T;
 
    Finish : Boolean := False;
 
@@ -84,16 +84,26 @@ procedure Test_Scroll is
          end if;
       end loop;
    end Scroll;
+
+   PPU_Renderer : PPU.Render.PPU_Renderer_T;
+
+   procedure Finalize is
+   begin
+      Set_Never_Wait (GB);
+      PPU_Renderer.Quit;
+      Window.Finalize;
+      SDL.Finalise;
+      Finalize (GB);
+   end Finalize;
 begin
    Init (GB);
    if not SDL_Renderer.Init (Window, Renderer) then
       return;
    end if;
 
-   GB.Main_Clock.Set_Never_Wait (True);
-
    Scroll.Start;
 
+   PPU_Renderer.Start (GB'Unchecked_Access);
    Next := Clock + Period;
 
    while not Finish loop
@@ -107,9 +117,11 @@ begin
          end if;
       end loop;
 
-      PPU.Render.Render (GB);
+      Increment_Clocks (GB, 168067);
 
       delay until Next;
       Next := Next + Period;
    end loop;
+
+   Finalize;
 end Test_Scroll;

@@ -4,6 +4,7 @@ with OPCode_Table; use OPCode_Table;
 package body Decoder is
    function Emulate_Cycle (GB : in out GB_T) return Clock_T is
       OPCode : OPCode_T;
+      Cycles : Clock_T;
    begin
       if Halt_Mode (GB.CPU) and then Pending_Interrupt (GB.CPU) then
          --  Resume execution as an interrupt is pending
@@ -16,13 +17,15 @@ package body Decoder is
       end if;
 
       if Halt_Mode (GB.CPU) then
-         GB.Main_Clock.Increment;
-         return 1;
+         Cycles := 1;
       else
          OPCode := Fetch (GB.CPU);
          Increment_PC (GB.CPU);
-         return Decode (GB, OPCode);
+         Cycles := Decode (GB, OPCode);
       end if;
+
+      Handle_Cycles (GB, Cycles);
+      return Cycles;
    end Emulate_Cycle;
 
    procedure Emulate_Cycle (GB : in out GB_T) is
@@ -60,20 +63,17 @@ package body Decoder is
 
       if Instruction_Info.Cycles.Branch then
          if Last_Branch_Taken (GB.CPU) then
-            Handle_Cycles (GB, Instruction_Info.Cycles.Taken);
             return Instruction_Info.Cycles.Taken;
          else
-            Handle_Cycles (GB, Instruction_Info.Cycles.Not_Taken);
             return Instruction_Info.Cycles.Not_Taken;
          end if;
       else
-         Handle_Cycles (GB, Instruction_Info.Cycles.Value);
          return Instruction_Info.Cycles.Value;
       end if;
    end Decode;
 
    procedure Handle_Cycles (GB : in out GB_T; Cycles : Clock_T) is
    begin
-      GB.Main_Clock.Add (Cycles);
+      Increment_Clocks (GB, Cycles);
    end Handle_Cycles;
 end Decoder;
