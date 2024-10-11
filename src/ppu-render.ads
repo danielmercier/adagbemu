@@ -22,5 +22,7 @@ package PPU.Render is
    end PPU_Renderer_T;
 
    --  Single process update taking the number of cycles to execute
+   --  Return true when video mode enters vblank
+   function Render (GB : in out GB_T; Cycles : Clock_T) return Boolean;
    procedure Render (GB : in out GB_T; Cycles : Clock_T);
 end PPU.Render;

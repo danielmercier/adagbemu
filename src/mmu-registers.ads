@@ -59,10 +59,10 @@ package MMU.Registers is
 
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
 
-   DIV : constant Addr16 := 16#FF04#;
-   TIMA : constant Addr16 := 16#FF05#;
-   TMA : constant Addr16 := 16#FF06#;
-   TAC : constant Addr16 := 16#FF07#;
+   DIV_Addr : constant Addr16 := 16#FF04#;
+   TIMA_Addr : constant Addr16 := 16#FF05#;
+   TMA_Addr : constant Addr16 := 16#FF06#;
+   TAC_Addr : constant Addr16 := 16#FF07#;
 
    IF_Addr : constant Addr16 := 16#FF0F#;
    LCDC_Addr : constant Addr16 := 16#FF40#;

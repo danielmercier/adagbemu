@@ -104,7 +104,7 @@ package body CPU is
    procedure Set_Mem (CPU : in out CPU_T; A : Addr16; V : Uint8) is
       To_Write : Uint8 := V;
    begin
-      if A = DIV then
+      if A = DIV_Addr then
          --  Any write to the DIV register sets it to 0
          To_Write := 0;
       end if;

@@ -5,8 +5,6 @@ with SDL.Events.Events; use SDL.Events.Events;
 
 with SDL_Renderer;
 
-with Ada.Real_Time; use Ada.Real_Time;
-
 with HAL; use HAL;
 
 with PPU.Render;
@@ -16,9 +14,6 @@ with GB; use GB;
 with Decoder; use Decoder;
 
 procedure Main is
-   Next    : Time;
-   Period  : constant Time_Span := Milliseconds (16);
-
    --  reference to the application window
    Window   : SDL.Video.Windows.Window;
    Renderer : SDL.Video.Renderers.Renderer;
@@ -27,12 +22,9 @@ procedure Main is
    Finish : Boolean := False;
 
    GB : aliased GB_T;
-   --  Timer_Task : Timer.Timer_T;
 
    procedure Finalize is
    begin
-      Set_Never_Wait (GB);
-      --  Timer_Task.Quit;
       Window.Finalize;
       SDL.Finalise;
       Finalize (GB);
@@ -47,9 +39,6 @@ begin
       return;
    end if;
 
-   --  Timer_Task.Start (GB'Unchecked_Access);
-   Next := Clock + Period;
-
    while not Finish loop
       SDL_Renderer.Render (Renderer, GB);
 
@@ -61,17 +50,14 @@ begin
          end if;
       end loop;
 
-      while Clock < Next loop
+      loop
          declare
             Cycles : constant Clock_T := Emulate_Cycle (GB);
          begin
-            PPU.Render.Render (GB, Cycles);
             Timer.Update (GB, Cycles);
+            exit when PPU.Render.Render (GB, Cycles);
          end;
       end loop;
-
-      delay until Next;
-      Next := Next + Period;
    end loop;
 
    Finalize;

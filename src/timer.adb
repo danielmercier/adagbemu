@@ -18,28 +18,28 @@ package body Timer is
          GB.Clock_Waiters (CW_Timers).Wait;
          Cycles := Cycles + Increments;
 
-         Current_TAC := Mem (GB.CPU, TAC);
+         Current_TAC := Mem (GB.CPU, TAC_Addr);
 
          if (Current_TAC and 16#04#) = 16#04#
             and then Cycles >= Timer_Periods (Current_TAC and 16#03#)
          then
             --  Increment TIMA once
             Cycles := 0;
-            New_TIMA := Mem (GB.CPU, TIMA) + 1;
+            New_TIMA := Mem (GB.CPU, TIMA_Addr) + 1;
 
             if New_TIMA = 0 then
                --  Load the TMA value int TIMA
-               Set_Mem (GB.CPU, TIMA, Mem (GB.CPU, TMA));
+               Set_Mem (GB.CPU, TIMA_Addr, Mem (GB.CPU, TMA_Addr));
 
                --  Overflows, generate an interrupt
                Interrupt_Timer_Overflow (GB.CPU);
             else
-               Set_Mem (GB.CPU, TIMA, New_TIMA);
+               Set_Mem (GB.CPU, TIMA_Addr, New_TIMA);
             end if;
          end if;
       end loop;
 
-      Set_Mem (GB.CPU, DIV, Mem (GB.CPU, DIV) + 1);
+      Set_Mem (GB.CPU, DIV_Addr, Mem (GB.CPU, DIV_Addr) + 1);
    end Update;
 
    task body Timer_T is
@@ -73,7 +73,7 @@ package body Timer is
          if Current_Cycles >= Div_Period then
             Current_Cycles := Current_Cycles - Div_Period;
             --  Increment the Div register
-            Set_Mem (GB.CPU, DIV, Mem (GB.CPU, DIV) + 1);
+            Set_Mem (GB.CPU, DIV_Addr, Mem (GB.CPU, DIV_Addr) + 1);
          else
             exit;
          end if;
@@ -82,8 +82,8 @@ package body Timer is
 
    procedure Update_Tima (GB : in out GB_T; Cycles : Clock_T) is
       Current_Cycles : Clock_T renames GB.Tima_Current_Cycles;
-      Current_TAC : constant Uint8 := Mem (GB.CPU, TAC);
-      Cur_Tima : constant Uint8 := Mem (GB.CPU, TIMA);
+      Current_TAC : constant Uint8 := Mem (GB.CPU, TAC_Addr);
+      Cur_Tima : constant Uint8 := Mem (GB.CPU, TIMA_Addr);
       Tima_Period : constant Clock_T := Timer_Periods (Current_TAC and 16#03#);
    begin
       Current_Cycles := Current_Cycles + Cycles;
@@ -103,10 +103,10 @@ package body Timer is
                   Interrupt_Timer_Overflow (GB.CPU);
 
                   --  Set to TMA
-                  Set_Mem (GB.CPU, TIMA, Mem (GB.CPU, TMA));
+                  Set_Mem (GB.CPU, TIMA_Addr, Mem (GB.CPU, TMA_Addr));
                else
                   --  Increment TIMA
-                  Set_Mem (GB.CPU, TIMA, Cur_Tima + 1);
+                  Set_Mem (GB.CPU, TIMA_Addr, Cur_Tima + 1);
                end if;
             end if;
          else

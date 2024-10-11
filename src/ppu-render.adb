@@ -93,8 +93,9 @@ package body PPU.Render is
       end case;
    end Next_Mode;
 
-   procedure Render (GB : in out GB_T; Cycles : Clock_T) is
+   function Render (GB : in out GB_T; Cycles : Clock_T) return Boolean is
       Current_Cycles : Clock_T renames GB.PPU_Current_Cycles;
+      Enters_VBlank : Boolean := False;
    begin
       Current_Cycles := Current_Cycles + Cycles;
 
@@ -107,20 +108,35 @@ package body PPU.Render is
             Timing : constant Clock_T := Timings (Mode);
          begin
             if Current_Cycles >= Timing then
-               --  Reduce the current cycles by the timing it takes to finish this
-               --  state
+               --  Reduce the current cycles by the timing it takes to finish
+               --  this state
                Current_Cycles := Current_Cycles - Timing;
 
                --  Process this state to the end
                Process (GB, Mode);
 
-               --  Set to next state
-               Set_Video_Mode (GB.Memory, Next_Mode (GB, Mode));
+               declare
+                  Next : constant Video_Mode := Next_Mode (GB, Mode);
+               begin
+                  --  Set to next state
+                  Set_Video_Mode (GB.Memory, Next);
+
+                  Enters_VBlank := Enters_VBlank
+                     or else (Mode /= VBlank and then Next = VBlank);
+               end;
             else
                exit;
             end if;
          end;
       end loop;
+
+      return Enters_VBlank;
+   end Render;
+
+   procedure Render (GB : in out GB_T; Cycles : Clock_T) is
+      Dummy : constant Boolean := Render (GB, Cycles);
+   begin
+      null;
    end Render;
 
    task body PPU_Renderer_T is

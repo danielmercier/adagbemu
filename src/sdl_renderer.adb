@@ -6,6 +6,9 @@ with SDL.Video.Rectangles; use SDL.Video.Rectangles;
 use type SDL.Coordinate;
 
 package body SDL_Renderer is
+   package Windows renames SDL.Video.Windows;
+   use type Windows.Window_Flags;
+
    function To_SDL_Colour (C : Color_T) return Colour is
    begin
       return Colour'(
@@ -30,7 +33,7 @@ package body SDL_Renderer is
               Title    => "GameBoy Emulator",
               Position => SDL.Video.Windows.Centered_Window_Position,
               Size     => SDL.Positive_Sizes'(Width, Height),
-              Flags    => SDL.Video.Windows.Windowed);
+              Flags    => Windows.Windowed or Windows.OpenGL);
       Create (Renderer, Window.Get_Surface);
 
       return True;

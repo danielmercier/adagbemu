@@ -1,5 +1,9 @@
 with CPU.Interrupts; use CPU.Interrupts;
 with OPCode_Table; use OPCode_Table;
+with Mnemonic_Table;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Decoder is
    function Emulate_Cycle (GB : in out GB_T) return Clock_T is
@@ -21,7 +25,11 @@ package body Decoder is
       else
          OPCode := Fetch (GB.CPU);
          Increment_PC (GB.CPU);
-         Cycles := Decode (GB, OPCode);
+         Cycles := Decode (GB, OPCode) / 4; --  4 T-Cycle in 1 M-Cycle
+
+         if Cycles = 0 then
+            raise Program_Error;
+         end if;
       end if;
 
       Handle_Cycles (GB, Cycles);
@@ -41,6 +49,7 @@ package body Decoder is
 
    function Decode (GB : in out GB_T; OPCode : OPCode_T) return Clock_T is
       Instruction_Info : Instruction_Info_T;
+      Mnemonic : Unbounded_String;
    begin
       if Should_Enable_Interrupts (GB.CPU) then
          --  This happens after emulating iterrupts thus we can directly
@@ -51,11 +60,17 @@ package body Decoder is
 
       if CB_Prefixed (GB.CPU) then
          Instruction_Info := CBprefixed (OPCode);
+         Mnemonic := Mnemonic_Table.CBprefixed (OPCode);
 
          --  Prefix is only applied once, unset cb prefixed
          Unset_CB_Prefixed (GB.CPU);
       else
          Instruction_Info := Unprefixed (OPCode);
+         Mnemonic := Mnemonic_Table.Unprefixed (OPCode);
+      end if;
+
+      if False then
+         Put_Line (To_String (Mnemonic));
       end if;
 
       --  Call the instruction to modifiy the CPU
