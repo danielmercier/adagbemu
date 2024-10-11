@@ -68,8 +68,6 @@ package CPU is
    procedure Unset_Should_Enable_Interrupts (CPU : in out CPU_T);
    function Should_Enable_Interrupts (CPU : CPU_T) return Boolean;
 
-   function Pending_Interrupt (CPU : CPU_T) return Boolean;
-
    function Halt_Mode (CPU : CPU_T) return Boolean;
    procedure Set_Halt_Mode (CPU : in out CPU_T);
    procedure Unset_Halt_Mode (CPU : in out CPU_T);

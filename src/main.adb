@@ -27,13 +27,11 @@ procedure Main is
    Finish : Boolean := False;
 
    GB : aliased GB_T;
-   PPU_Renderer : PPU.Render.PPU_Renderer_T;
    --  Timer_Task : Timer.Timer_T;
 
    procedure Finalize is
    begin
       Set_Never_Wait (GB);
-      PPU_Renderer.Quit;
       --  Timer_Task.Quit;
       Window.Finalize;
       SDL.Finalise;
@@ -41,7 +39,7 @@ procedure Main is
    end Finalize;
 begin
    Init (GB);
-   Load ("mem/cpu_instrs.gb", GB, 16#0000#);
+   Load ("mem/instr_timing.gb", GB, 16#0000#);
 
    if not SDL_Renderer.Init (Window, Renderer) then
       Finalize;
@@ -49,7 +47,6 @@ begin
       return;
    end if;
 
-   PPU_Renderer.Start (GB'Unchecked_Access);
    --  Timer_Task.Start (GB'Unchecked_Access);
    Next := Clock + Period;
 
@@ -66,12 +63,10 @@ begin
 
       while Clock < Next loop
          declare
-            Cycle_Start : constant Time := Clock;
             Cycles : constant Clock_T := Emulate_Cycle (GB);
-            Cycle_Next : constant Time :=
-               Cycle_Start + Nanoseconds (50) * Integer (Cycles);
          begin
-            delay until Cycle_Next;
+            PPU.Render.Render (GB, Cycles);
+            Timer.Update (GB, Cycles);
          end;
       end loop;
 

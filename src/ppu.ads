@@ -84,4 +84,10 @@ package PPU is
        LCDC : LCDC_T;
        Scroll_X : Screen_Background_X;
        Scroll_Y : Screen_Background_Y);
+
+   type State is private;
+private
+   type State is record
+      Current_Cycles : Clock_T := 0;
+   end record;
 end PPU;

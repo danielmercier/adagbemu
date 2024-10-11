@@ -45,11 +45,21 @@ package body MMU.Registers is
       return Convert (Mem.Get (IE_Addr));
    end IE;
 
+   function To_STAT is new Ada.Unchecked_Conversion (Uint8, STAT_T);
+   function From_STAT is new Ada.Unchecked_Conversion (STAT_T, Uint8);
+
    function STAT (Mem : Memory_T) return STAT_T is
-      function Convert is new Ada.Unchecked_Conversion (Uint8, STAT_T);
    begin
-      return Convert (Mem.Get (STAT_Addr));
+      return To_STAT (Mem.Get (STAT_Addr));
    end STAT;
+
+   procedure Set_Video_Mode (Mem : Memory_T; Mode : Video_Mode) is
+      S : STAT_T := STAT (Mem);
+   begin
+      S.Mode := Mode;
+
+      Mem.Set (STAT_Addr, From_STAT (S));
+   end Set_Video_Mode;
 
    procedure Increment_LY (Mem : Memory_T) is
    begin

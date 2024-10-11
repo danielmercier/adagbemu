@@ -85,12 +85,8 @@ procedure Test_Scroll is
       end loop;
    end Scroll;
 
-   PPU_Renderer : PPU.Render.PPU_Renderer_T;
-
    procedure Finalize is
    begin
-      Set_Never_Wait (GB);
-      PPU_Renderer.Quit;
       Window.Finalize;
       SDL.Finalise;
       Finalize (GB);
@@ -103,7 +99,6 @@ begin
 
    Scroll.Start;
 
-   PPU_Renderer.Start (GB'Unchecked_Access);
    Next := Clock + Period;
 
    while not Finish loop
@@ -117,7 +112,7 @@ begin
          end if;
       end loop;
 
-      Increment_Clocks (GB, 168067);
+      PPU.Render.Render (GB, 168067);
 
       delay until Next;
       Next := Next + Period;

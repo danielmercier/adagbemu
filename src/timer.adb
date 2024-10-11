@@ -60,4 +60,64 @@ package body Timer is
          end select;
       end loop;
    end Timer_T;
+
+   procedure Update_Div (GB : in out GB_T; Cycles : Clock_T) is
+      Current_Cycles : Clock_T renames GB.Div_Current_Cycles;
+   begin
+      Current_Cycles := Current_Cycles + Cycles;
+
+      loop
+         --  This loop is usefull in case the cycles to execute is very
+         --  big for some reason
+
+         if Current_Cycles >= Div_Period then
+            Current_Cycles := Current_Cycles - Div_Period;
+            --  Increment the Div register
+            Set_Mem (GB.CPU, DIV, Mem (GB.CPU, DIV) + 1);
+         else
+            exit;
+         end if;
+      end loop;
+   end Update_Div;
+
+   procedure Update_Tima (GB : in out GB_T; Cycles : Clock_T) is
+      Current_Cycles : Clock_T renames GB.Tima_Current_Cycles;
+      Current_TAC : constant Uint8 := Mem (GB.CPU, TAC);
+      Cur_Tima : constant Uint8 := Mem (GB.CPU, TIMA);
+      Tima_Period : constant Clock_T := Timer_Periods (Current_TAC and 16#03#);
+   begin
+      Current_Cycles := Current_Cycles + Cycles;
+
+      loop
+         --  This loop is usefull in case the cycles to execute is very
+         --  big for some reason
+
+         if Current_Cycles >= Tima_Period then
+            Current_Cycles := Current_Cycles - Tima_Period;
+
+            --  Check if we need to increment TIMA
+            if (Current_TAC and 16#04#) = 16#04# then
+               --  Increment the Tima register sending an interrupt if necessary
+               if Cur_Tima = 16#FF# then
+                  --  Overflow, send interrupt
+                  Interrupt_Timer_Overflow (GB.CPU);
+
+                  --  Set to TMA
+                  Set_Mem (GB.CPU, TIMA, Mem (GB.CPU, TMA));
+               else
+                  --  Increment TIMA
+                  Set_Mem (GB.CPU, TIMA, Cur_Tima + 1);
+               end if;
+            end if;
+         else
+            exit;
+         end if;
+      end loop;
+   end Update_Tima;
+
+   procedure Update (GB : in out GB_T; Cycles : Clock_T) is
+   begin
+      Update_Div (GB, Cycles);
+      Update_Tima (GB, Cycles);
+   end Update;
 end Timer;

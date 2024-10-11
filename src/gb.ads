@@ -26,7 +26,13 @@ package GB is
       Memory : Memory_T;
       CPU : CPU_T;
 
+      --  For the task version
       Clock_Waiters : Clock_Waiters_T;
+
+      --  For the non task version
+      PPU_Current_Cycles : Clock_T := 0;
+      Div_Current_Cycles : Clock_T := 0;
+      Tima_Current_Cycles : Clock_T := 0;
 
       Screen : Screen_T;
    end record;

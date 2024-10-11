@@ -891,7 +891,8 @@ package body Instructions is
    procedure STOP (CPU : in out CPU_T; I : Uint8) is
       pragma Unreferenced (I);
    begin
-      HALT (CPU);
+      --  HALT (CPU);
+      null;
    end STOP;
 
    procedure PREFIX (CPU : in out CPU_T) is

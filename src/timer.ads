@@ -6,6 +6,9 @@ package Timer is
       entry Start (GB_In : GB_P);
       entry Quit;
    end Timer_T;
+
+   procedure Update (GB : in out GB_T; Cycles : Clock_T);
+   --  Sequential non blocking update
 private
    procedure Update (GB : in out GB_T);
    --  Blocking update

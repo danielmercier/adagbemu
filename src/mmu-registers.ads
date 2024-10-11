@@ -80,6 +80,8 @@ package MMU.Registers is
    function IE (Mem : Memory_T) return Interrupt_Array;
    function STAT (Mem : Memory_T) return STAT_T;
 
+   procedure Set_Video_Mode (Mem : Memory_T; Mode : Video_Mode);
+
    procedure Increment_LY (Mem : Memory_T);
    procedure Reset_LY (Mem : Memory_T);
    procedure Set_IF (Mem : Memory_T; F : Interrupt_Enum; B : Boolean);

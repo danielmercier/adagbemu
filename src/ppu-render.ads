@@ -1,10 +1,15 @@
 with GB; use GB;
 
 package PPU.Render is
-   Read_OAM : constant Clock_T := 80;
-   Read_VRAM : constant Clock_T := 172;
-   HBlank : constant Clock_T := 204;
-   VBlank : constant Clock_T := 456;
+   Dot_Timing : constant Clock_T := 4;
+
+   type Timings_T is array (Video_Mode) of Clock_T;
+   Timings : constant Timings_T :=
+      [HBlank => 204 / Dot_Timing,
+       VBlank => 456 / Dot_Timing,
+       Data_Transfer => 172 / Dot_Timing,
+       OAM => 80 / Dot_Timing];
+
    --  Number of lines for the full vertical blank
    VBlank_Line_Number : constant := 10;
 
@@ -16,4 +21,6 @@ package PPU.Render is
       entry Quit;
    end PPU_Renderer_T;
 
+   --  Single process update taking the number of cycles to execute
+   procedure Render (GB : in out GB_T; Cycles : Clock_T);
 end PPU.Render;

@@ -1,4 +1,9 @@
 package body CPU.Interrupts is
+   function Pending_Interrupt (CPU : CPU_T) return Boolean is
+   begin
+      return (Mem (CPU, IF_Addr) and Mem (CPU, IE_Addr)) /= 16#00#;
+   end Pending_Interrupt;
+
    procedure Handle_Interrupts (CPU : in out CPU_T) is
       Interrupt_Flag : constant Interrupt_Array := IFF (CPU.Memory);
    begin

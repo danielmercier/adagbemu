@@ -190,16 +190,6 @@ package body CPU is
       CPU.Halt_Mode := True;
    end Set_Halt_Mode;
 
-   function Pending_Interrupt (CPU : CPU_T) return Boolean is
-      Interrupt_IF : constant Interrupt_Array := IFF (CPU.Memory);
-      Interrupt_IE : constant Interrupt_Array := IE (CPU.Memory);
-   begin
-      return
-         (for some I in Interrupt_Array'Range =>
-            Interrupt_IE (I) or else Interrupt_IF (I)
-         );
-   end Pending_Interrupt;
-
    procedure Unset_Halt_Mode (CPU : in out CPU_T) is
    begin
       CPU.Halt_Mode := False;
