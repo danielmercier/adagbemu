@@ -28,6 +28,9 @@ package body GB is
 
       Load ("mem/mem.dump", GB, 16#8000#);
 
+      GB.Memory.Set (SB_Addr, 16#00#);
+      GB.Memory.Set (SC_Addr, 16#7F#);
+      GB.Memory.Set (JOYP_Addr, 16#0F#);
       GB.Memory.Set (DIV_Addr, 16#18#);
       GB.Memory.Set (TIMA_Addr, 16#00#);
       GB.Memory.Set (TMA_Addr, 16#00#);

@@ -113,8 +113,13 @@ package body CPU is
          when 16#0000# .. 16#7FFF# =>
             --  Do not write on cardbridge
             return;
+         when LY_Addr =>
+            --  Read-only
+            return;
          when JOYP_Addr =>
-            To_Write := (V and 16#30#) or 16#0F#; --  nothing pressed
+            --  bit 0 1 2 3 are read-only
+
+            To_Write := (V and 16#30#) or (Mem (CPU, A) and 16#0F#);
          when DIV_Addr =>
             --  Any write to the DIV register sets it to 0
             To_Write := 0;
@@ -123,6 +128,10 @@ package body CPU is
             CPU.DMA_Current_Cycles := Clock_T'(-2);
             --  Starting the number of cycles negative because the instruction
             --  starting the transfer takes 2 cycles
+         when STAT_Addr =>
+            --  bit 0 1 2 are read-only
+
+            To_Write := (V and 16#F8#) or (Mem (CPU, A) and 16#07#);
          when others =>
             null;
       end case;
