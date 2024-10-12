@@ -4,6 +4,8 @@ with Loader; use Loader;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
+with MMU.Registers; use MMU.Registers;
+
 package body GB is
    procedure Set_Never_Wait (GB : in out GB_T) is
    begin
@@ -25,6 +27,19 @@ package body GB is
       Init (GB.CPU, GB.Memory);
 
       Load ("mem/mem.dump", GB, 16#8000#);
+
+      GB.Memory.Set (DIV_Addr, 16#18#);
+      GB.Memory.Set (TIMA_Addr, 16#00#);
+      GB.Memory.Set (TMA_Addr, 16#00#);
+      GB.Memory.Set (IF_Addr, 16#F1#);
+      GB.Memory.Set (LCDC_Addr, 16#91#);
+      GB.Memory.Set (STAT_Addr, 16#81#);
+      GB.Memory.Set (SCY_Addr, 16#00#);
+      GB.Memory.Set (SCX_Addr, 16#00#);
+      GB.Memory.Set (LY_Addr, 16#91#);
+      GB.Memory.Set (LYC_Addr, 16#00#);
+      GB.Memory.Set (BGP_Addr, 16#FC#);
+      GB.Memory.Set (IE_Addr, 16#00#);
    end Init;
 
    procedure Finalize (GB : in out GB_T) is

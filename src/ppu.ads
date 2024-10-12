@@ -3,9 +3,6 @@ with MMU; use MMU;
 with MMU.Registers; use MMU.Registers;
 
 package PPU is
-   --  The color of a pixel (the palette will decide the real color)
-   type Pixel_Color is range 0 .. 3;
-
    type Color_T is record
       R : Uint8;
       G : Uint8;
@@ -74,7 +71,7 @@ package PPU is
    function Get_Tile_Address (N : Unsigned_Tile_Pattern) return Tile_Data_1;
 
    --  Use palette to get a real color from a pixel color
-   function Palette (Pixel_Col : Pixel_Color) return Color_T;
+   function Palette (Palette : Palette_T; Color : Pixel_Color) return Color_T;
 
    --  Render a line by modifying given screen
    procedure Renderscan

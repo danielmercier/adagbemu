@@ -57,7 +57,23 @@ package MMU.Registers is
       Coincidence_Interrupt at 0 range 6 .. 6;
    end record;
 
+   --  The color of a pixel (the palette will decide the real color)
+   type Pixel_Color is range 0 .. 3;
+
+   --  Id inside the palette
+   type ID_T is mod 4 with Size => 2;
+
+   --  The actual palette
+   type Palette_T is array (Pixel_Color) of ID_T with Pack;
+
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
+
+   subtype IO_Addr_Range is Addr16 range 16#FF00# .. 16#FF50#;
+
+   JOYP_Addr : constant Addr16 := 16#FF00#;
+
+   SB_Addr : constant Addr16 := 16#FF01#;
+   SC_Addr : constant Addr16 := 16#FF02#;
 
    DIV_Addr : constant Addr16 := 16#FF04#;
    TIMA_Addr : constant Addr16 := 16#FF05#;
@@ -70,12 +86,16 @@ package MMU.Registers is
    SCY_Addr : constant Addr16 := 16#FF42#;
    SCX_Addr : constant Addr16 := 16#FF43#;
    LY_Addr : constant Addr16 := 16#FF44#;
+   LYC_Addr : constant Addr16 := 16#FF45#;
+   BGP_Addr : constant Addr16 := 16#FF47#;
    IE_Addr : constant Addr16 := 16#FFFF#;
 
    function LCDC (Mem : Memory_T) return LCDC_T;
    function SCY (Mem : Memory_T) return Uint8;
    function SCX (Mem : Memory_T) return Uint8;
    function LY (Mem : Memory_T) return Uint8;
+   function LYC (Mem : Memory_T) return Uint8;
+   function BGP (Mem : Memory_T) return Palette_T;
    function IFF (Mem : Memory_T) return Interrupt_Array;
    function IE (Mem : Memory_T) return Interrupt_Array;
    function STAT (Mem : Memory_T) return STAT_T;
@@ -85,4 +105,6 @@ package MMU.Registers is
    procedure Increment_LY (Mem : Memory_T);
    procedure Reset_LY (Mem : Memory_T);
    procedure Set_IF (Mem : Memory_T; F : Interrupt_Enum; B : Boolean);
+   procedure Set_STAT (Mem : Memory_T; S : STAT_T);
+
 end MMU.Registers;

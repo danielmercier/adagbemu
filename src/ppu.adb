@@ -58,21 +58,23 @@ package body PPU is
    end Get_Pixel_Color;
 
    function Get_Tile_Address (N : Signed_Tile_Pattern) return Tile_Data_0 is
-      Address : constant Integer :=
-         Integer (Tile_Data_0_Start)
-         + (Integer (N) * Tile_Size_X * One_Pixel_Size);
    begin
-      return Addr16 (Address);
+      if N >= 0 then
+         return Tile_Data_0_Start + Addr16 (N) * Tile_Size_X * One_Pixel_Size;
+      else
+         return Tile_Data_0_Start - Addr16 (-N) * Tile_Size_X * One_Pixel_Size;
+      end if;
    end Get_Tile_Address;
 
    function Get_Tile_Address (N : Unsigned_Tile_Pattern) return Tile_Data_1 is
    begin
-      return Tile_Data_1_Start + (Addr16 (N) * Tile_Size_X * One_Pixel_Size);
+      return Tile_Data_1_Start + Addr16 (N) * Tile_Size_X * One_Pixel_Size;
    end Get_Tile_Address;
 
-   function Palette (Pixel_Col : Pixel_Color) return Color_T is
+   function Palette (Palette : Palette_T; Color : Pixel_Color) return Color_T
+   is
    begin
-      case Pixel_Col is
+      case Palette (Color) is
          when 0 => return (255, 255, 255, 255);
          when 1 => return (168, 168, 168, 255);
          when 2 => return (85, 85, 85, 255);
@@ -88,23 +90,33 @@ package body PPU is
        Scroll_X : Screen_Background_X;
        Scroll_Y : Screen_Background_Y)
    is
-      Tile_Map_Start : constant Addr16 := BG_Tile_Map (LCDC);
-
-      Pixel_X : Screen_Background_X := Scroll_X;
-      Pixel_Y : constant Screen_Background_Y := Line + Scroll_Y;
-
-      X_In_Grid : Tile_Grid_X := Tile_Grid_X (Pixel_X / Tile_Size_X);
-      Y_In_Grid : constant Tile_Grid_Y := Tile_Grid_Y (Pixel_Y / Tile_Size_Y);
-
-      X_In_Tile : Tile_Pixel_X := Tile_Pixel_X (Pixel_X mod Tile_Size_X);
-      Y_In_Tile : constant Tile_Pixel_Y :=
-         Tile_Pixel_Y (Pixel_Y mod Tile_Size_Y);
+      Tiles_Start : constant Addr16 := BG_Tile_Map (LCDC);
    begin
       for X in Screen_X loop
          declare
-            Tile_Map : constant Addr16 :=
-               Get_Start_Address (X_In_Grid, Y_In_Grid, Tile_Map_Start);
-            Pattern_Number : constant Uint8 := Mem.Get (Tile_Map);
+            --  Index of the pixel in the full background
+            Scrolled_X : constant Screen_Background_X := X + Scroll_X;
+            Scrolled_Y : constant Screen_Background_Y := Line + Scroll_Y;
+
+            --  Which tile in the grid of tiles we need to take for the X and Y
+            --  coordinates
+            Tile_X : constant Tile_Grid_X :=
+               Tile_Grid_X (Scrolled_X / Tile_Size_X);
+            Tile_Y : constant Tile_Grid_Y :=
+               Tile_Grid_Y (Scrolled_Y / Tile_Size_Y);
+
+            --  Which pixel in the tile
+            Tile_P_X : constant Tile_Pixel_X :=
+               Tile_Pixel_X (Scrolled_X mod Tile_Size_X);
+            Tile_P_Y : constant Tile_Pixel_Y :=
+               Tile_Pixel_Y (Scrolled_Y mod Tile_Size_Y);
+
+            --  Final index of the tile
+            Tile_Address : constant Addr16 :=
+               Get_Start_Address (Tile_X, Tile_Y, Tiles_Start);
+
+            Pattern_Number : constant Uint8 := Mem.Get (Tile_Address);
+
             Tile_Data : constant Addr16 :=
                (if LCDC (Select_Tile_Data_1) then
                    Get_Tile_Address
@@ -112,15 +124,12 @@ package body PPU is
                 else
                    Get_Tile_Address
                       (To_Signed_Tile_Pattern (Pattern_Number)));
-         begin
-            Screen (X, Line) :=
-               Palette
-                  (Get_Pixel_Color (Mem, X_In_Tile, Y_In_Tile, Tile_Data));
-         end;
 
-         X_In_Tile := X_In_Tile + 1;
-         Pixel_X := Pixel_X + 1;
-         X_In_Grid := Tile_Grid_X (Pixel_X / Tile_Size_X);
+            Color : constant Pixel_Color :=
+               (Get_Pixel_Color (Mem, Tile_P_X, Tile_P_Y, Tile_Data));
+         begin
+            Screen (X, Line) := Palette (BGP (Mem), Color);
+         end;
       end loop;
    end Renderscan;
 end PPU;

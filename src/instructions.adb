@@ -118,14 +118,16 @@ package body Instructions is
 
    procedure LDH (CPU : in out CPU_T; Dest : Addr8; Src : Reg8_T) is
       Actual_Addr : constant Addr16 := 16#FF00# + Addr16 (Dest);
+      Value : constant Uint8 := Reg (CPU, Src);
    begin
-      Set_Mem (CPU, Actual_Addr, Reg (CPU, Src));
+      Set_Mem (CPU, Actual_Addr, Value);
    end LDH;
 
    procedure LDH (CPU : in out CPU_T; Dest : Reg8_T; Src : Addr8) is
       Actual_Addr : constant Addr16 := 16#FF00# + Addr16 (Src);
+      Value : constant Uint8 := Mem (CPU, Actual_Addr);
    begin
-      Set_Reg (CPU, Dest, Mem (CPU, Actual_Addr));
+      Set_Reg (CPU, Dest, Value);
    end LDH;
 
    procedure LD (CPU : in out CPU_T; Dest : Reg16_T; Src : Uint16) is
@@ -891,12 +893,14 @@ package body Instructions is
    procedure STOP (CPU : in out CPU_T; I : Uint8) is
       pragma Unreferenced (I);
    begin
-      --  HALT (CPU);
-      null;
+      if Debug_Test_Mode then
+         HALT (CPU);
+      end if;
    end STOP;
 
    procedure PREFIX (CPU : in out CPU_T) is
+      pragma Unreferenced (CPU);
    begin
-      Set_CB_Prefixed (CPU);
+      null;
    end PREFIX;
 end Instructions;

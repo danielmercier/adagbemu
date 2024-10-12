@@ -5,8 +5,6 @@ with Decoder; use Decoder;
 with System; use System;
 with Ada.Unchecked_Conversion;
 
-with CPU.Interrupts;
-
 package body CPU_C_Interface is
    GB : GB_T;
 
@@ -40,7 +38,7 @@ package body CPU_C_Interface is
 
    procedure Init (Mem_Size : size_t; Mem_Access : access Uint8) is
    begin
-      CPU.Interrupts.Debug_Interrupts_Enabled := False;
+      Debug_Test_Mode := True;
 
       Init (GB);
 

@@ -1,19 +1,30 @@
+with CPU.Interrupts; use CPU.Interrupts;
+
 package body PPU.Render is
-   procedure Drawing_Process (GB : in out GB_T) is
+   procedure VRAM_Process (GB : in out GB_T) is
+      S : STAT_T := STAT (GB.Memory);
    begin
-      Renderscan
-         (Screen => GB.Screen,
-          Mem => GB.Memory,
-          Line => Screen_Y (LY (GB.Memory)),
-          LCDC => LCDC (GB.Memory),
-          Scroll_X => Screen_Background_X (SCX (GB.Memory)),
-          Scroll_Y => Screen_Background_Y (SCY (GB.Memory)));
-   end Drawing_Process;
+      S.Coincidence_Flag := LY (GB.Memory) = LYC (GB.Memory);
+
+      Set_STAT (GB.Memory, S);
+
+      if S.Coincidence_Flag then
+         Interrupt_LY_Coincidence (GB.CPU);
+      end if;
+   end VRAM_Process;
 
    procedure OAM_Process (GB : in out GB_T) is null;
 
    procedure HBlank_Process (GB : in out GB_T) is
+      Line : constant Uint8 := LY (GB.Memory);
    begin
+      Renderscan
+         (Screen => GB.Screen,
+          Mem => GB.Memory,
+          Line => Screen_Y (Line),
+          LCDC => LCDC (GB.Memory),
+          Scroll_X => Screen_Background_X (SCX (GB.Memory)),
+          Scroll_Y => Screen_Background_Y (SCY (GB.Memory)));
       Increment_LY (GB.Memory);
    end HBlank_Process;
 
@@ -33,7 +44,7 @@ package body PPU.Render is
          --  Emulate reading of VRAM
          GB.Clock_Waiters (CW_PPU).Will_Wait (Timings (Data_Transfer));
          --  render a line just after that
-         Drawing_Process (GB);
+         VRAM_Process (GB);
          GB.Clock_Waiters (CW_PPU).Wait;
 
          GB.Clock_Waiters (CW_PPU).Will_Wait (Timings (HBlank));
@@ -61,16 +72,19 @@ package body PPU.Render is
          when OAM =>
             OAM_Process (GB);
          when Data_Transfer =>
-            Drawing_Process (GB);
+            VRAM_Process (GB);
       end case;
    end Process;
 
    --  Compute next mode
-   function Next_Mode (GB : GB_T; Mode : Video_Mode) return Video_Mode is
+   function Next_Mode (GB : in out GB_T; Mode : Video_Mode) return Video_Mode is
    begin
       case Mode is
          when HBlank =>
-            if LY (GB.Memory) >= Uint8 (Screen_Y'Last + 1) then
+            if LY (GB.Memory) > Uint8 (Screen_Y'Last) then
+               --  Next mode is VBlank, set interrupt
+               Interrupt_VBlank (GB.CPU);
+
                --  Finished drawing pixels, entering VBlank
                return VBlank;
             else
@@ -78,7 +92,7 @@ package body PPU.Render is
                return OAM;
             end if;
          when VBlank =>
-            if LY (GB.Memory) >= Uint8 (Screen_Y'Last + VBlank_Line_Number) then
+            if LY (GB.Memory) > Uint8 (Screen_Y'Last + VBlank_Line_Number) then
                --  Finished VBlank, going back to OAM scan
                Reset_LY (GB.Memory);
                return OAM;
@@ -89,6 +103,9 @@ package body PPU.Render is
          when OAM =>
             return Data_Transfer;
          when Data_Transfer =>
+            --  Next mode is HBlank, set interrupt
+            Interrupt_HBlank (GB.CPU);
+
             return HBlank;
       end case;
    end Next_Mode;

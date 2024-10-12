@@ -13,6 +13,8 @@ with Loader; use Loader;
 with GB; use GB;
 with Decoder; use Decoder;
 
+with Ada.Command_Line; use Ada.Command_Line;
+
 procedure Main is
    --  reference to the application window
    Window   : SDL.Video.Windows.Window;
@@ -31,7 +33,10 @@ procedure Main is
    end Finalize;
 begin
    Init (GB);
-   Load ("mem/instr_timing.gb", GB, 16#0000#);
+
+   if Argument_Count >= 1 then
+      Load (Argument (1), GB, 16#0000#);
+   end if;
 
    if not SDL_Renderer.Init (Window, Renderer) then
       Finalize;

@@ -10,4 +10,9 @@ package body MMU is
          Memory (A) := V;
       end Set;
    end Memory_P;
+
+   function Init return Memory_Array is
+   begin
+      return [others => 16#00#];
+   end Init;
 end MMU;

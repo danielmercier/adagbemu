@@ -21,6 +21,11 @@ package body MMU.Registers is
       return Mem.Get (LY_Addr);
    end LY;
 
+   function LYC (Mem : Memory_T) return Uint8 is
+   begin
+      return Mem.Get (LYC_Addr);
+   end LYC;
+
    function SCX (Mem : Memory_T) return Uint8 is
    begin
       return Mem.Get (SCX_Addr);
@@ -30,6 +35,12 @@ package body MMU.Registers is
    begin
       return Mem.Get (SCY_Addr);
    end SCY;
+
+   function BGP (Mem : Memory_T) return Palette_T is
+      function To_Palette is new Ada.Unchecked_Conversion (Uint8, Palette_T);
+   begin
+      return To_Palette (Mem.Get (BGP_Addr));
+   end BGP;
 
    function IFF (Mem : Memory_T) return Interrupt_Array is
       function Convert is new Ada.Unchecked_Conversion
@@ -83,4 +94,9 @@ package body MMU.Registers is
       --  And it with 16#2F# to be sure that first 3 bit are zero
       Mem.Set (IF_Addr, New_Val and 16#2F#);
    end Set_IF;
+
+   procedure Set_STAT (Mem : Memory_T; S : STAT_T) is
+   begin
+      Mem.Set (STAT_Addr, From_STAT (S));
+   end Set_STAT;
 end MMU.Registers;

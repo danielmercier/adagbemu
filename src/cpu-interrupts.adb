@@ -6,13 +6,16 @@ package body CPU.Interrupts is
 
    procedure Handle_Interrupts (CPU : in out CPU_T) is
       Interrupt_Flag : constant Interrupt_Array := IFF (CPU.Memory);
+      Interrupt_Enable_Flag : constant Interrupt_Array := IE (CPU.Memory);
    begin
-      if not Debug_Interrupts_Enabled then
+      if Debug_Test_Mode then
          return;
       end if;
 
       for Interrupt in Interrupt_Enum loop
-         if Interrupt_Flag (Interrupt) then
+         if Interrupt_Enable_Flag (Interrupt)
+            and then Interrupt_Flag (Interrupt)
+         then
             Set_IF (CPU.Memory, Interrupt, False);
             Push (CPU, Get_PC (CPU));
             Set_PC (CPU, Jump_Address (Interrupt));
@@ -23,11 +26,8 @@ package body CPU.Interrupts is
    end Handle_Interrupts;
 
    procedure Interrupt (CPU : in out CPU_T; Int : Interrupt_Enum) is
-      IE : constant Interrupt_Array := MMU.Registers.IE (CPU.Memory);
    begin
-      if IE (Int) then
-         Set_IF (CPU.Memory, Int,  True);
-      end if;
+      Set_IF (CPU.Memory, Int,  True);
    end Interrupt;
 
    procedure Interrupt_VBlank (CPU : in out CPU_T) is
@@ -73,12 +73,4 @@ package body CPU.Interrupts is
          Interrupt (CPU, LCDC_Status);
       end if;
    end Interrupt_LY_Coincidence;
-
-   procedure Interrupt_OAM (CPU : in out CPU_T) is
-      STAT : constant STAT_T := MMU.Registers.STAT (CPU.Memory);
-   begin
-      if STAT.OAM_Interrupt then
-         Interrupt (CPU, LCDC_Status);
-      end if;
-   end Interrupt_OAM;
 end CPU.Interrupts;

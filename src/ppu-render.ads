@@ -1,14 +1,12 @@
 with GB; use GB;
 
 package PPU.Render is
-   Dot_Timing : constant Clock_T := 4;
-
    type Timings_T is array (Video_Mode) of Clock_T;
    Timings : constant Timings_T :=
-      [HBlank => 204 / Dot_Timing,
-       VBlank => 456 / Dot_Timing,
-       Data_Transfer => 172 / Dot_Timing,
-       OAM => 80 / Dot_Timing];
+      [HBlank => 204,
+       VBlank => 456,
+       Data_Transfer => 172,
+       OAM => 80];
 
    --  Number of lines for the full vertical blank
    VBlank_Line_Number : constant := 10;

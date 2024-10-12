@@ -1,9 +1,6 @@
 with MMU.Registers; use MMU.Registers;
 
 package CPU.Interrupts is
-   --  Only used for testing to disable interrupts
-   Debug_Interrupts_Enabled : Boolean := True;
-
    function Pending_Interrupt (CPU : CPU_T) return Boolean;
    procedure Handle_Interrupts (CPU : in out CPU_T);
 
@@ -20,7 +17,6 @@ package CPU.Interrupts is
    --  and check if the interrupt is selected in the STAT register
    procedure Interrupt_HBlank (CPU : in out CPU_T);
    procedure Interrupt_LY_Coincidence (CPU : in out CPU_T);
-   procedure Interrupt_OAM (CPU : in out CPU_T);
 private
    type Jump_Address_T is array (Interrupt_Enum) of Addr16;
    Jump_Address : constant Jump_Address_T :=

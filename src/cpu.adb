@@ -104,10 +104,15 @@ package body CPU is
    procedure Set_Mem (CPU : in out CPU_T; A : Addr16; V : Uint8) is
       To_Write : Uint8 := V;
    begin
-      if A = DIV_Addr then
-         --  Any write to the DIV register sets it to 0
-         To_Write := 0;
-      end if;
+      case A is
+         when JOYP_Addr =>
+            To_Write := (V and 16#30#) or 16#0F#; --  nothing pressed
+         when DIV_Addr =>
+            --  Any write to the DIV register sets it to 0
+            To_Write := 0;
+         when others =>
+            null;
+      end case;
 
       if CPU.Mem_Setter = null then
          CPU.Memory.Set (A, To_Write);
@@ -276,18 +281,9 @@ package body CPU is
       return Addr16 (Read_D16 (CPU));
    end Read_A16;
 
-   function CB_Prefixed (CPU : CPU_T) return Boolean is
+   function Software_Breakpoint (CPU : in out CPU_T) return Boolean is
    begin
-      return CPU.CB_Prefixed;
-   end CB_Prefixed;
-
-   procedure Set_CB_Prefixed (CPU : in out CPU_T) is
-   begin
-      CPU.CB_Prefixed := True;
-   end Set_CB_Prefixed;
-
-   procedure Unset_CB_Prefixed (CPU : in out CPU_T) is
-   begin
-      CPU.CB_Prefixed := False;
-   end Unset_CB_Prefixed;
+      --  see LD B, B as a breakpoint
+      return Mem (CPU, Get_PC (CPU)) = 16#40#;
+   end Software_Breakpoint;
 end CPU;
