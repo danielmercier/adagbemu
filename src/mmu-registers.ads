@@ -1,4 +1,17 @@
 package MMU.Registers is
+   --  The color of a pixel (the palette will decide the real color)
+   type Pixel_Color is range 0 .. 3;
+
+   --  Id inside the palette
+   type ID_T is mod 4 with Size => 2;
+
+   --  The actual palette
+   type Palette_T is array (Pixel_Color) of ID_T with Pack;
+
+   type CGB_OBP_Palette is (OBP0, OBP1, OBP2, OBP3, OBP4, OBP5, OBP6, OBP7)
+      with Size => 3;
+   type DMG_OBP_Palette is (OBP0, OBP1) with Size => 1;
+
    --  Background tile map locations
    subtype Tile_Map_0 is Addr16 range 16#9800# .. 16#9BFF#;
    subtype Tile_Map_1 is Addr16 range 16#9C00# .. 16#9FFF#;
@@ -10,6 +23,41 @@ package MMU.Registers is
    --  Start of tile data is different from 'First
    Tile_Data_0_Start : constant Tile_Data_0 := 16#9000#;
    Tile_Data_1_Start : constant Tile_Data_1 := Tile_Data_1'First;
+
+   --  Object Attribute Memory
+   type Sprite is record
+      Y_Position : Uint8;
+      X_Position : Uint8;
+      Tile_Index : Uint8;
+      CGB_Palette : CGB_OBP_Palette;
+      Bank : Boolean;
+      DMG_Palette : DMG_OBP_Palette;
+      X_Flip : Boolean;
+      Y_Flip : Boolean;
+      Priority : Boolean;
+   end record with Size => 32;
+
+   for Sprite use record
+      Y_Position at 0 range 0 .. 7;
+      X_Position at 1 range 0 .. 7;
+      Tile_Index at 2 range 0 .. 7;
+      CGB_Palette at 3 range 0 .. 2;
+      Bank at 3 range 3 .. 3;
+      DMG_Palette at 3 range 4 .. 4;
+      X_Flip at 3 range 5 .. 5;
+      Y_Flip at 3 range 6 .. 6;
+      Priority at 3 range 7 .. 7;
+   end record;
+
+   Sprite_Size : constant Addr16 := Sprite'Size / 8;
+
+   subtype OAM_Addr is Addr16 range 16#FE00# .. 16#FE9F#;
+   Sprite_Count : constant Addr16 :=
+      (OAM_Addr'Last - OAM_Addr'First + 1) / Sprite_Size;
+
+   type Sprite_Array is array (1 .. Sprite_Count) of Sprite;
+
+   function Get_Sprites (Mem : Memory_T) return Sprite_Array;
 
    type LCDC_Enum is
       (BG_Window_Display,
@@ -57,15 +105,6 @@ package MMU.Registers is
       Coincidence_Interrupt at 0 range 6 .. 6;
    end record;
 
-   --  The color of a pixel (the palette will decide the real color)
-   type Pixel_Color is range 0 .. 3;
-
-   --  Id inside the palette
-   type ID_T is mod 4 with Size => 2;
-
-   --  The actual palette
-   type Palette_T is array (Pixel_Color) of ID_T with Pack;
-
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
 
    subtype IO_Addr_Range is Addr16 range 16#FF00# .. 16#FF50#;
@@ -89,6 +128,8 @@ package MMU.Registers is
    LYC_Addr : constant Addr16 := 16#FF45#;
    DMA_Addr : constant Addr16 := 16#FF46#;
    BGP_Addr : constant Addr16 := 16#FF47#;
+   OBP0_Addr : constant Addr16:= 16#FF48#;
+   OBP1_Addr : constant Addr16:= 16#FF49#;
    IE_Addr : constant Addr16 := 16#FFFF#;
 
    function LCDC (Mem : Memory_T) return LCDC_T;
@@ -97,6 +138,7 @@ package MMU.Registers is
    function LY (Mem : Memory_T) return Uint8;
    function LYC (Mem : Memory_T) return Uint8;
    function BGP (Mem : Memory_T) return Palette_T;
+   function OBP (Mem : Memory_T; P : DMG_OBP_Palette) return Palette_T;
    function IFF (Mem : Memory_T) return Interrupt_Array;
    function IE (Mem : Memory_T) return Interrupt_Array;
    function STAT (Mem : Memory_T) return STAT_T;

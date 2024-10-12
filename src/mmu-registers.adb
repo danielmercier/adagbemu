@@ -1,6 +1,28 @@
 with Ada.Unchecked_Conversion;
 
 package body MMU.Registers is
+   function Get_Sprites (Mem : Memory_T) return Sprite_Array is
+      type Uint8_Array is array (0 .. Sprite_Size - 1) of Uint8;
+      function Convert is new Ada.Unchecked_Conversion (Uint8_Array, Sprite);
+
+      Result : Sprite_Array;
+   begin
+      for Sprite_N in 0 .. Sprite_Count - 1 loop
+         declare
+            Raw_Sprite : Uint8_Array;
+         begin
+            for I in Uint8_Array'Range loop
+               Raw_Sprite (I) :=
+                  Mem.Get (OAM_Addr'First + Sprite_N * Sprite_Size + I);
+            end loop;
+
+            Result (Sprite_N + 1) := Convert (Raw_Sprite);
+         end;
+      end loop;
+
+      return Result;
+   end Get_Sprites;
+
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16 is
    begin
       if LCDC (Select_BG_Tile_Map_1) then
@@ -36,11 +58,22 @@ package body MMU.Registers is
       return Mem.Get (SCY_Addr);
    end SCY;
 
+   function To_Palette is new Ada.Unchecked_Conversion (Uint8, Palette_T);
+
    function BGP (Mem : Memory_T) return Palette_T is
-      function To_Palette is new Ada.Unchecked_Conversion (Uint8, Palette_T);
    begin
       return To_Palette (Mem.Get (BGP_Addr));
    end BGP;
+
+   function OBP (Mem : Memory_T; P : DMG_OBP_Palette) return Palette_T is
+   begin
+      case P is
+         when OBP0 =>
+            return To_Palette (Mem.Get (OBP0_Addr));
+         when OBP1 =>
+            return To_Palette (Mem.Get (OBP1_Addr));
+      end case;
+   end;
 
    function IFF (Mem : Memory_T) return Interrupt_Array is
       function Convert is new Ada.Unchecked_Conversion

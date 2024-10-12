@@ -71,6 +71,15 @@ package body PPU is
       return Tile_Data_1_Start + Addr16 (N) * Tile_Size_X * One_Pixel_Size;
    end Get_Tile_Address;
 
+   function Get_Tile_Address
+      (N : Unsigned_Tile_Pattern; Tile_Size : Uint8)
+      return Tile_Data_1
+   is
+   begin
+      return Tile_Data_1_Start
+         + Addr16 (N) * Addr16 (Tile_Size) * One_Pixel_Size;
+   end Get_Tile_Address;
+
    function Palette (Palette : Palette_T; Color : Pixel_Color) return Color_T
    is
    begin
@@ -90,7 +99,10 @@ package body PPU is
        Scroll_X : Screen_Background_X;
        Scroll_Y : Screen_Background_Y)
    is
+      Horizontal_Count : Uint8 := 0;
       Tiles_Start : constant Addr16 := BG_Tile_Map (LCDC);
+
+      Sprites : constant Sprite_Array := Get_Sprites (Mem);
    begin
       for X in Screen_X loop
          declare
@@ -130,6 +142,76 @@ package body PPU is
          begin
             Screen (X, Line) := Palette (BGP (Mem), Color);
          end;
+
+         --  Iterate over all sprites
+         for Sprite of Sprites loop
+            declare
+               Tile_A_X : constant Integer :=
+                  Integer (X) - Integer (Sprite.X_Position) + 8;
+               Tile_A_Y : constant Integer :=
+                  Integer (Line) - Integer (Sprite.Y_Position) + 16;
+
+               Large : constant Boolean := LCDC (Obj_Size_8x16);
+               Tile_Size_Y : constant Uint8 :=
+                  (if Large then Tile_Size_X * 2 else Tile_Size_X);
+            begin
+               --  check if X and Y are on the tile
+               if Tile_A_Y in 0 .. Integer (Tile_Size_Y) then
+                  Horizontal_Count := Horizontal_Count + 1;
+
+                  if Tile_A_X in 0 .. Integer (Tile_Size_X) - 1 then
+                     --  Check the color of the sprite
+                     declare
+                        Tile_P_X : constant Tile_Pixel_X :=
+                           (if Sprite.X_Flip then
+                              Tile_Pixel_X ((Tile_Size_X - 1) - Tile_A_X)
+                           else
+                              Tile_Pixel_X (Tile_A_X));
+
+                        --  Y coordinate can exceed the size of the tile.
+                        --  modulo it with that size so it doesn't exceed it.
+                        --  Y in 8 .. 15 has an incidence on the
+                        --  tile_data_start
+                        Tile_P_Y : constant Tile_Pixel_Y :=
+                           (if Sprite.Y_Flip then
+                              Tile_Pixel_Y (
+                                 (Integer (Tile_Size_Y - 1) - Tile_A_Y)
+                                 mod Tile_Size_X
+                              )
+                           else
+                              Tile_Pixel_Y (Tile_A_Y mod Tile_Size_X));
+
+                        Pattern_Number : constant Uint8 :=
+                           (if Large then
+                              Sprite.Tile_Index
+                            else
+                               Sprite.Tile_Index and 16#FE#);
+
+                        Tile_Data : constant Addr16 :=
+                            Get_Tile_Address
+                               (To_Unsigned_Tile_Pattern (Pattern_Number),
+                                Tile_Size_Y);
+
+                        Tile_Data_Start : constant Addr16 :=
+                           (if Tile_A_Y >= Tile_Size_X then
+                              Tile_Data + 1
+                           else
+                              Tile_Data);
+
+                        Color : constant Pixel_Color :=
+                           Get_Pixel_Color
+                              (Mem, Tile_P_X, Tile_P_Y, Tile_Data_Start);
+                     begin
+                        if Color > 0 then
+                           --  Object with color 0 are transparent
+                           Screen (X, Line) :=
+                              Palette (OBP (Mem, Sprite.DMG_Palette), Color);
+                        end if;
+                     end;
+                  end if;
+               end if;
+            end;
+         end loop;
       end loop;
    end Renderscan;
 end PPU;

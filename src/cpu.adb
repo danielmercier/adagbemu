@@ -237,16 +237,14 @@ package body CPU is
          declare
             Length : constant Addr16 := 16#009F#;
 
-            Dest : Addr16 := 16#FE00#;
             Source : Addr16 :=
                Addr16 (Mem (CPU, DMA_Addr) and 16#F0#)
                * 16#100#;
          begin
-            for I in 1 .. Length loop
+            for Dest in OAM_Addr loop
                Set_Mem (CPU, Dest, Mem (CPU, Source));
 
                Source := Source + 1;
-               Dest := Dest + 1;
             end loop;
          end;
       end if;
