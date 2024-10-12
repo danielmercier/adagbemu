@@ -104,21 +104,30 @@ package body CPU is
    procedure Set_Mem (CPU : in out CPU_T; A : Addr16; V : Uint8) is
       To_Write : Uint8 := V;
    begin
+      if CPU.Mem_Setter /= null then
+         CPU.Mem_Setter (A, To_Write);
+         return;
+      end if;
+
       case A is
+         when 16#0000# .. 16#7FFF# =>
+            --  Do not write on cardbridge
+            return;
          when JOYP_Addr =>
             To_Write := (V and 16#30#) or 16#0F#; --  nothing pressed
          when DIV_Addr =>
             --  Any write to the DIV register sets it to 0
             To_Write := 0;
+         when DMA_Addr =>
+            CPU.DMA_Transfer := True;
+            CPU.DMA_Current_Cycles := Clock_T'(-2);
+            --  Starting the number of cycles negative because the instruction
+            --  starting the transfer takes 2 cycles
          when others =>
             null;
       end case;
 
-      if CPU.Mem_Setter = null then
-         CPU.Memory.Set (A, To_Write);
-      else
-         CPU.Mem_Setter (A, To_Write);
-      end if;
+      CPU.Memory.Set (A, To_Write);
    end Set_Mem;
 
    procedure Set_Mem (CPU : in out CPU_T; P : Ptr16_T; V : Uint8) is
@@ -199,6 +208,40 @@ package body CPU is
    begin
       CPU.Halt_Mode := False;
    end Unset_Halt_Mode;
+
+   procedure DMA_Update (CPU : in out CPU_T; Cycles : Clock_T) is
+      Current_Cycles : Clock_T renames CPU.DMA_Current_Cycles;
+   begin
+      if not CPU.DMA_Transfer then
+         return;
+      end if;
+
+      Current_Cycles := Current_Cycles + Cycles;
+
+      if Current_Cycles >= DMA_Duration then
+         --  Resetting Current_Cycles is useless because it is set when
+         --  dma_transfer is set
+
+         CPU.DMA_Transfer := False;
+
+         --  Can do the actual transfer now
+         declare
+            Length : constant Addr16 := 16#009F#;
+
+            Dest : Addr16 := 16#FE00#;
+            Source : Addr16 :=
+               Addr16 (Mem (CPU, DMA_Addr) and 16#F0#)
+               * 16#100#;
+         begin
+            for I in 1 .. Length loop
+               Set_Mem (CPU, Dest, Mem (CPU, Source));
+
+               Source := Source + 1;
+               Dest := Dest + 1;
+            end loop;
+         end;
+      end if;
+   end DMA_Update;
 
    function Last_Branch_Taken (CPU : CPU_T) return Boolean is
    begin

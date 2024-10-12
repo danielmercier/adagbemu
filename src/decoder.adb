@@ -41,8 +41,9 @@ package body Decoder is
    end Emulate_Cycle;
 
    function Fetch (CPU : CPU_T) return OPCode_T is
+      PC : constant Addr16 := Get_PC (CPU);
    begin
-      return OPCode_T (Mem (CPU, Get_PC (CPU)));
+      return OPCode_T (Mem (CPU, PC));
    end Fetch;
 
    function Decode (GB : in out GB_T; OPCode : in out OPCode_T) return Clock_T is
@@ -70,6 +71,11 @@ package body Decoder is
          Log_CPU_Info (GB.CPU);
 
          raise Program_Error with "Unknown instruction";
+      end if;
+
+      if Get_PC (GB.CPU) = 16#39# then
+         --  Call_Vector
+         raise Program_Error with "Unexpected program counter";
       end if;
 
       Instruction_Info.Instruction (GB.CPU);

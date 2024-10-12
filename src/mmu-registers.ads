@@ -87,6 +87,7 @@ package MMU.Registers is
    SCX_Addr : constant Addr16 := 16#FF43#;
    LY_Addr : constant Addr16 := 16#FF44#;
    LYC_Addr : constant Addr16 := 16#FF45#;
+   DMA_Addr : constant Addr16 := 16#FF46#;
    BGP_Addr : constant Addr16 := 16#FF47#;
    IE_Addr : constant Addr16 := 16#FFFF#;
 

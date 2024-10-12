@@ -95,12 +95,7 @@ package body CPU_C_Interface is
    end Set_State;
 
    function Step return int is
-      Cycle : Clock_T := Emulate_Cycle (GB);
    begin
-      if CB_Prefixed (GB.CPU) then
-         Cycle := Cycle + Emulate_Cycle (GB);
-      end if;
-
-      return int (Cycle);
+      return int (Emulate_Cycle (GB));
    end Step;
 end CPU_C_Interface;

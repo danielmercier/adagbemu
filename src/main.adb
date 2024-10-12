@@ -10,6 +10,7 @@ with HAL; use HAL;
 with PPU.Render;
 with Timer;
 with Loader; use Loader;
+with CPU; use CPU;
 with GB; use GB;
 with Decoder; use Decoder;
 
@@ -60,6 +61,7 @@ begin
             Cycles : constant Clock_T := Emulate_Cycle (GB);
          begin
             Timer.Update (GB, Cycles);
+            DMA_Update (GB.CPU, Cycles);
             exit when PPU.Render.Render (GB, Cycles);
          end;
       end loop;

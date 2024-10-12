@@ -72,6 +72,9 @@ package CPU is
    procedure Set_Halt_Mode (CPU : in out CPU_T);
    procedure Unset_Halt_Mode (CPU : in out CPU_T);
 
+   procedure DMA_Update (CPU : in out CPU_T; Cycles : Clock_T);
+   DMA_Duration : constant Clock_T := 140;
+
    --  Return true if the last instruction made a conditional jump
    function Last_Branch_Taken (CPU : CPU_T) return Boolean;
    --  Set to B if the last instruction made a condition jump
@@ -137,6 +140,10 @@ private
       --  Flag to say that interrupts should be enabled after the next
       --  instruction
       Should_Enable_Interrupts : Boolean := False;
+
+      --  Flag asking for a DMA transfer to start
+      DMA_Transfer : Boolean := False;
+      DMA_Current_Cycles : Clock_T := 0;
 
       --  The cpu is in a halt mode state and is waiting for an interrupt
       Halt_Mode : Boolean := False;

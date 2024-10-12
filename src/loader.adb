@@ -15,7 +15,7 @@ package body Loader is
 
       while not End_Of_File (File) loop
          Uint8'Read (Input_Stream, Read_Byte);
-         Set_Mem (GB.CPU, Current_Addr, Read_Byte);
+         GB.Memory.Set (Current_Addr, Read_Byte);
 
          exit when End_Of_File (File);
          Current_Addr := Current_Addr + 1;
