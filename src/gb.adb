@@ -6,6 +6,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with MMU.Registers; use MMU.Registers;
 
+with Ada.Numerics.Discrete_Random;
+
 package body GB is
    procedure Set_Never_Wait (GB : in out GB_T) is
    begin
@@ -42,6 +44,8 @@ package body GB is
       GB.Memory.Set (LY_Addr, 16#91#);
       GB.Memory.Set (LYC_Addr, 16#00#);
       GB.Memory.Set (BGP_Addr, 16#FC#);
+      GB.Memory.Set (WY_Addr, 16#00#);
+      GB.Memory.Set (WX_Addr, 16#00#);
       GB.Memory.Set (IE_Addr, 16#00#);
    end Init;
 

@@ -73,11 +73,6 @@ package body Decoder is
          raise Program_Error with "Unknown instruction";
       end if;
 
-      if Get_PC (GB.CPU) = 16#39# then
-         --  Call_Vector
-         raise Program_Error with "Unexpected program counter";
-      end if;
-
       Instruction_Info.Instruction (GB.CPU);
 
       if Instruction_Info.Cycles.Branch then

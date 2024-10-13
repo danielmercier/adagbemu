@@ -9,7 +9,7 @@ project AdaGBEmu is
 
    package Compiler is
       for Default_Switches ("Ada") use AdaGBEmu_Config.Ada_Compiler_Switches &
-         ("-gnat2022", "-gnatyM120");
+         ("-gnat2022", "-gnatyM120", "-O0");
    end Compiler;
 
    package Binder is

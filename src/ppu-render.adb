@@ -13,9 +13,23 @@ package body PPU.Render is
       end if;
    end VRAM_Process;
 
-   procedure OAM_Process (GB : in out GB_T) is null;
+   procedure OAM_Process (GB : in out GB_T) is
+      Line : constant Uint8 := LY (GB.Memory);
+      Selected_Sprites : constant Sprite_Array :=
+         Select_OAM_Objects (
+            Get_Sprites (GB.Memory),
+            LCDC (GB.Memory),
+            Screen_X (Line)
+         );
+   begin
+      GB.PPU_State.Sprite_Count := Selected_Sprites'Length;
+      GB.PPU_State.Selected_Sprites (Selected_Sprites'Range) :=
+         Selected_Sprites;
+   end OAM_Process;
 
    procedure HBlank_Process (GB : in out GB_T) is
+      Sprites : Sprite_Array renames
+         GB.PPU_State.Selected_Sprites (1 .. GB.PPU_State.Sprite_Count);
       Line : constant Uint8 := LY (GB.Memory);
    begin
       Renderscan
@@ -24,7 +38,8 @@ package body PPU.Render is
           Line => Screen_Y (Line),
           LCDC => LCDC (GB.Memory),
           Scroll_X => Screen_Background_X (SCX (GB.Memory)),
-          Scroll_Y => Screen_Background_Y (SCY (GB.Memory)));
+          Scroll_Y => Screen_Background_Y (SCY (GB.Memory)),
+          Sprites => Sprites);
       Increment_LY (GB.Memory);
    end HBlank_Process;
 
@@ -111,7 +126,7 @@ package body PPU.Render is
    end Next_Mode;
 
    function Render (GB : in out GB_T; Cycles : Clock_T) return Boolean is
-      Current_Cycles : Clock_T renames GB.PPU_Current_Cycles;
+      Current_Cycles : Clock_T renames GB.PPU_State.Current_Cycles;
       Enters_VBlank : Boolean := False;
    begin
       Current_Cycles := Current_Cycles + Cycles;

@@ -119,7 +119,7 @@ package body CPU is
          when JOYP_Addr =>
             --  bit 0 1 2 3 are read-only
 
-            To_Write := (V and 16#30#) or (Mem (CPU, A) and 16#0F#);
+            To_Write := (V and 16#30#) or (Mem (CPU, A) and 16#CF#);
          when DIV_Addr =>
             --  Any write to the DIV register sets it to 0
             To_Write := 0;
@@ -235,8 +235,6 @@ package body CPU is
 
          --  Can do the actual transfer now
          declare
-            Length : constant Addr16 := 16#009F#;
-
             Source : Addr16 :=
                Addr16 (Mem (CPU, DMA_Addr) and 16#F0#)
                * 16#100#;

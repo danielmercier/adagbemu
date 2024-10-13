@@ -29,8 +29,9 @@ package GB is
       --  For the task version
       Clock_Waiters : Clock_Waiters_T;
 
+      PPU_State : PPU.State;
+
       --  For the non task version
-      PPU_Current_Cycles : Clock_T := 0;
       Div_Current_Cycles : Clock_T := 0;
       Tima_Current_Cycles : Clock_T := 0;
 

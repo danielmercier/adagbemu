@@ -91,18 +91,106 @@ package body PPU is
       end case;
    end Palette;
 
+   function Select_OAM_Objects
+      (Sprites : Sprite_Array; LCDC : LCDC_T; Line : Screen_X)
+      return Sprite_Array
+   is
+      Result : Sprite_Array (1 .. 10); --  Max number of sprites
+      Horizontal_Count : Addr16 := 0;
+   begin
+      for Sprite of Sprites loop
+         declare
+            Tile_A_Y : constant Integer :=
+               Integer (Line) - Integer (Sprite.Y_Position) + 16;
+            Large : constant Boolean := LCDC (Obj_Size_8x16);
+            Tile_Size_Y : constant Uint8 :=
+               (if Large then Tile_Size_X * 2 else Tile_Size_X);
+         begin
+            --  check if X and Y are on the tile
+            if Tile_A_Y in 0 .. Integer (Tile_Size_Y) then
+               Horizontal_Count := Horizontal_Count + 1;
+               Result (Horizontal_Count) := Sprite;
+            end if;
+         end;
+
+         exit when Horizontal_Count >= 10;
+      end loop;
+
+      return Result (1 .. Horizontal_Count); -- Return actual size
+   end Select_OAM_Objects;
+
+   procedure Draw_Window
+      (Screen : in out Screen_T;
+       Mem : Memory_T;
+       LCDC : LCDC_T;
+       Tiles_Win_Start : Addr16;
+       X : Screen_X;
+       Y : Screen_Y;
+       WX : Uint8;
+       WY : Uint8)
+   is
+      --  Absolute position for the windows tile
+      Tile_A_X : constant Integer := Integer (X) - Integer (WX) + 7;
+      Tile_A_Y : constant Integer := Integer (Y) - Integer (WY);
+   begin
+      if Tile_A_X < 0 or else Tile_A_Y < 0 then
+         return;
+      end if;
+
+      declare
+         --  Which tile in the grid of tiles we need to take for the X and Y
+         --  coordinates
+         Tile_X : constant Tile_Grid_X :=
+            Tile_Grid_X (Tile_A_X / Tile_Size_X);
+         Tile_Y : constant Tile_Grid_Y :=
+            Tile_Grid_Y (Tile_A_Y / Tile_Size_Y);
+
+         --  Which pixel in the tile
+         Tile_P_X : constant Tile_Pixel_X :=
+            Tile_Pixel_X (Tile_A_X mod Tile_Size_X);
+         Tile_P_Y : constant Tile_Pixel_Y :=
+            Tile_Pixel_Y (Tile_A_Y mod Tile_Size_Y);
+
+         --  Final index of the tile
+         Tile_Address : constant Addr16 :=
+            Get_Start_Address (Tile_X, Tile_Y, Tiles_Win_Start);
+
+         Pattern_Number : constant Uint8 := Mem.Get (Tile_Address);
+
+         Tile_Data : constant Addr16 :=
+            (if LCDC (Select_Tile_Data_1) then
+                Get_Tile_Address
+                   (To_Unsigned_Tile_Pattern (Pattern_Number))
+             else
+                Get_Tile_Address
+                   (To_Signed_Tile_Pattern (Pattern_Number)));
+
+         W_Color : constant Pixel_Color :=
+            Get_Pixel_Color (Mem, Tile_P_X, Tile_P_Y, Tile_Data);
+      begin
+         Screen (X, Y) := Palette (BGP (Mem), W_Color);
+      end;
+   end Draw_Window;
+
    procedure Renderscan
       (Screen : in out Screen_T;
        Mem : Memory_T;
        Line : Screen_Y;
        LCDC : LCDC_T;
        Scroll_X : Screen_Background_X;
-       Scroll_Y : Screen_Background_Y)
+       Scroll_Y : Screen_Background_Y;
+       Sprites : Sprite_Array)
    is
-      Horizontal_Count : Uint8 := 0;
-      Tiles_Start : constant Addr16 := BG_Tile_Map (LCDC);
+      WX : constant Uint8 := MMU.Registers.WX (Mem);
+      WY : constant Uint8 := MMU.Registers.WY (Mem);
 
-      Sprites : constant Sprite_Array := Get_Sprites (Mem);
+      Display_Window : constant Boolean :=
+         LCDC (Window_Display)
+         and then WX <= 166
+         and then WY <= 143;
+
+      Tiles_BG_Start : constant Addr16 := BG_Tile_Map (LCDC);
+      Tiles_Win_Start : constant Addr16 := Win_Tile_Map (LCDC);
    begin
       for X in Screen_X loop
          declare
@@ -125,7 +213,7 @@ package body PPU is
 
             --  Final index of the tile
             Tile_Address : constant Addr16 :=
-               Get_Start_Address (Tile_X, Tile_Y, Tiles_Start);
+               Get_Start_Address (Tile_X, Tile_Y, Tiles_BG_Start);
 
             Pattern_Number : constant Uint8 := Mem.Get (Tile_Address);
 
@@ -137,81 +225,103 @@ package body PPU is
                    Get_Tile_Address
                       (To_Signed_Tile_Pattern (Pattern_Number)));
 
-            Color : constant Pixel_Color :=
-               (Get_Pixel_Color (Mem, Tile_P_X, Tile_P_Y, Tile_Data));
+            Selected_Sprite : Sprite :=
+               (X_Position => Uint8'Last, others => <>);
+            OBJ_Color : Pixel_Color := 0; --  Can initialize to transparent
+            BG_Color : constant Pixel_Color :=
+               Get_Pixel_Color (Mem, Tile_P_X, Tile_P_Y, Tile_Data);
          begin
-            Screen (X, Line) := Palette (BGP (Mem), Color);
-         end;
+            --  Iterate over all sprites
+            for Sprite of Sprites loop
+               if Sprite.X_Position < Selected_Sprite.X_Position then
+                  --  This object has higher priority
+                  declare
+                     Tile_A_X : constant Integer :=
+                        Integer (X) - Integer (Sprite.X_Position) + 8;
+                     Tile_A_Y : constant Integer :=
+                        Integer (Line) - Integer (Sprite.Y_Position) + 16;
 
-         --  Iterate over all sprites
-         for Sprite of Sprites loop
-            declare
-               Tile_A_X : constant Integer :=
-                  Integer (X) - Integer (Sprite.X_Position) + 8;
-               Tile_A_Y : constant Integer :=
-                  Integer (Line) - Integer (Sprite.Y_Position) + 16;
+                     Large : constant Boolean := LCDC (Obj_Size_8x16);
+                     Tile_Size_Y : constant Uint8 :=
+                        (if Large then Tile_Size_X * 2 else Tile_Size_X);
+                  begin
+                     --  check if X and Y are on the tile
+                     if Tile_A_Y in 0 .. Integer (Tile_Size_Y) - 1
+                        and then Tile_A_X in 0 .. Integer (Tile_Size_X) - 1
+                     then
+                        --  Check the color of the sprite
+                        declare
+                           Tile_P_X : constant Tile_Pixel_X :=
+                              (if Sprite.X_Flip then
+                                 Tile_Pixel_X ((Tile_Size_X - 1) - Tile_A_X)
+                              else
+                                 Tile_Pixel_X (Tile_A_X));
 
-               Large : constant Boolean := LCDC (Obj_Size_8x16);
-               Tile_Size_Y : constant Uint8 :=
-                  (if Large then Tile_Size_X * 2 else Tile_Size_X);
-            begin
-               --  check if X and Y are on the tile
-               if Tile_A_Y in 0 .. Integer (Tile_Size_Y) then
-                  Horizontal_Count := Horizontal_Count + 1;
+                           --  Y coordinate can exceed the size of the tile.
+                           --  modulo it with that size so it doesn't exceed
+                           --  it.
+                           --  Y in 8 .. 15 has an incidence on the
+                           --  tile_data_start
+                           Tile_P_Y : constant Tile_Pixel_Y :=
+                              (if Sprite.Y_Flip then
+                                 Tile_Pixel_Y (
+                                    (Integer (Tile_Size_Y - 1) - Tile_A_Y)
+                                    mod Tile_Size_X
+                                 )
+                              else
+                                 Tile_Pixel_Y (Tile_A_Y mod Tile_Size_X));
 
-                  if Tile_A_X in 0 .. Integer (Tile_Size_X) - 1 then
-                     --  Check the color of the sprite
-                     declare
-                        Tile_P_X : constant Tile_Pixel_X :=
-                           (if Sprite.X_Flip then
-                              Tile_Pixel_X ((Tile_Size_X - 1) - Tile_A_X)
-                           else
-                              Tile_Pixel_X (Tile_A_X));
+                           Pattern_Number : constant Uint8 :=
+                              (if Large then
+                                 Sprite.Tile_Index and 16#FE#
+                               else
+                                 Sprite.Tile_Index);
 
-                        --  Y coordinate can exceed the size of the tile.
-                        --  modulo it with that size so it doesn't exceed it.
-                        --  Y in 8 .. 15 has an incidence on the
-                        --  tile_data_start
-                        Tile_P_Y : constant Tile_Pixel_Y :=
-                           (if Sprite.Y_Flip then
-                              Tile_Pixel_Y (
-                                 (Integer (Tile_Size_Y - 1) - Tile_A_Y)
-                                 mod Tile_Size_X
-                              )
-                           else
-                              Tile_Pixel_Y (Tile_A_Y mod Tile_Size_X));
+                           Tile_Data : constant Addr16 :=
+                               Get_Tile_Address
+                                  (To_Unsigned_Tile_Pattern (Pattern_Number),
+                                   Tile_Size_Y);
 
-                        Pattern_Number : constant Uint8 :=
-                           (if Large then
-                              Sprite.Tile_Index
-                            else
-                               Sprite.Tile_Index and 16#FE#);
+                           Tile_Data_Start : constant Addr16 :=
+                              (if Tile_A_Y >= Tile_Size_X then
+                                 Tile_Data + 1
+                              else
+                                 Tile_Data);
 
-                        Tile_Data : constant Addr16 :=
-                            Get_Tile_Address
-                               (To_Unsigned_Tile_Pattern (Pattern_Number),
-                                Tile_Size_Y);
-
-                        Tile_Data_Start : constant Addr16 :=
-                           (if Tile_A_Y >= Tile_Size_X then
-                              Tile_Data + 1
-                           else
-                              Tile_Data);
-
-                        Color : constant Pixel_Color :=
-                           Get_Pixel_Color
-                              (Mem, Tile_P_X, Tile_P_Y, Tile_Data_Start);
-                     begin
-                        if Color > 0 then
-                           --  Object with color 0 are transparent
-                           Screen (X, Line) :=
-                              Palette (OBP (Mem, Sprite.DMG_Palette), Color);
-                        end if;
-                     end;
-                  end if;
+                           Color : constant Pixel_Color :=
+                              Get_Pixel_Color
+                                 (Mem, Tile_P_X, Tile_P_Y, Tile_Data_Start);
+                        begin
+                           if Color > 0 then
+                              --  Found a suitable sprite with higher priority
+                              Selected_Sprite := Sprite;
+                              OBJ_Color := Color;
+                           end if;
+                        end;
+                     end if;
+                  end;
                end if;
-            end;
-         end loop;
+            end loop;
+
+            if OBJ_Color > 0
+               and then (not Selected_Sprite.BG_Over_OBJ or else BG_Color = 0)
+            then
+               --  Object with color 0 are transparent
+               --    don't draw the object if BG_Over_OBJ is set and BG_Color
+               --    is not 0
+               Screen (X, Line) :=
+                  Palette (OBP (Mem, Selected_Sprite.DMG_Palette), OBJ_Color);
+            else
+               --  Draw the background otherwise
+               Screen (X, Line) := Palette (BGP (Mem), BG_Color);
+            end if;
+
+            if Display_Window then
+               --  Draw windows on top
+               Draw_Window
+                  (Screen, Mem, LCDC, Tiles_Win_Start, X, Line, WX, WY);
+            end if;
+         end;
       end loop;
    end Renderscan;
 end PPU;

@@ -73,6 +73,11 @@ package PPU is
    --  Use palette to get a real color from a pixel color
    function Palette (Palette : Palette_T; Color : Pixel_Color) return Color_T;
 
+   --  Select suitable sprites
+   function Select_OAM_Objects
+      (Sprites : Sprite_Array; LCDC : LCDC_T; Line : Screen_X)
+      return Sprite_Array;
+
    --  Render a line by modifying given screen
    procedure Renderscan
       (Screen : in out Screen_T;
@@ -80,11 +85,14 @@ package PPU is
        Line : Screen_Y;
        LCDC : LCDC_T;
        Scroll_X : Screen_Background_X;
-       Scroll_Y : Screen_Background_Y);
+       Scroll_Y : Screen_Background_Y;
+       Sprites : Sprite_Array);
 
    type State is private;
 private
    type State is record
       Current_Cycles : Clock_T := 0;
+      Sprite_Count : Addr16 := 0;
+      Selected_Sprites : Sprite_Array (1 .. 10);
    end record;
 end PPU;

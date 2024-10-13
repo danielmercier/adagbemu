@@ -5,7 +5,7 @@ package body MMU.Registers is
       type Uint8_Array is array (0 .. Sprite_Size - 1) of Uint8;
       function Convert is new Ada.Unchecked_Conversion (Uint8_Array, Sprite);
 
-      Result : Sprite_Array;
+      Result : Sprite_Array (1 .. Sprite_Count);
    begin
       for Sprite_N in 0 .. Sprite_Count - 1 loop
          declare
@@ -31,6 +31,29 @@ package body MMU.Registers is
          return Tile_Map_0'First;
       end if;
    end BG_Tile_Map;
+
+   function Win_Tile_Map (LCDC : LCDC_T) return Addr16 is
+   begin
+      if LCDC (Select_Window_Tile_Map_1) then
+         return Tile_Map_1'First;
+      else
+         return Tile_Map_0'First;
+      end if;
+   end Win_Tile_Map;
+
+   function To_JOYP_Array is new Ada.Unchecked_Conversion (Uint8, JOYP_Array);
+   function From_JOYP_Array is
+      new Ada.Unchecked_Conversion (JOYP_Array, Uint8);
+
+   function JOYP (Mem : Memory_T) return JOYP_Array is
+   begin
+      return To_JOYP_Array (Mem.Get (JOYP_Addr));
+   end JOYP;
+
+   procedure Set_JOYP (Mem : Memory_T; J : JOYP_Array) is
+   begin
+      Mem.Set (JOYP_Addr, From_JOYP_Array (J));
+   end Set_JOYP;
 
    function LCDC (Mem : Memory_T) return LCDC_T is
       function Convert is new Ada.Unchecked_Conversion (Uint8, LCDC_T);
@@ -73,7 +96,11 @@ package body MMU.Registers is
          when OBP1 =>
             return To_Palette (Mem.Get (OBP1_Addr));
       end case;
-   end;
+   end OBP;
+
+   function WY (Mem : Memory_T) return Uint8 is (Mem.Get (WY_Addr));
+
+   function WX (Mem : Memory_T) return Uint8 is (Mem.Get (WX_Addr));
 
    function IFF (Mem : Memory_T) return Interrupt_Array is
       function Convert is new Ada.Unchecked_Conversion

@@ -5,7 +5,7 @@ with GB; use GB;
 with PPU; use PPU;
 
 package SDL_Renderer is
-   Pixel_Size : constant := 2;
+   Pixel_Size : constant := 4;
    Width  : constant := Integer (Screen_X'Last + 1) * Pixel_Size;
    Height : constant := Integer (Screen_Y'Last + 1) * Pixel_Size;
 

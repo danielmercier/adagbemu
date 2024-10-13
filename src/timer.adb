@@ -73,7 +73,7 @@ package body Timer is
          if Current_Cycles >= Div_Period then
             Current_Cycles := Current_Cycles - Div_Period;
             --  Increment the Div register
-            Set_Mem (GB.CPU, DIV_Addr, Mem (GB.CPU, DIV_Addr) + 1);
+            GB.Memory.Set (DIV_Addr, Mem (GB.CPU, DIV_Addr) + 1);
          else
             exit;
          end if;

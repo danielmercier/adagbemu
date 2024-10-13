@@ -34,7 +34,7 @@ package MMU.Registers is
       DMG_Palette : DMG_OBP_Palette;
       X_Flip : Boolean;
       Y_Flip : Boolean;
-      Priority : Boolean;
+      BG_Over_OBJ : Boolean;
    end record with Size => 32;
 
    for Sprite use record
@@ -46,7 +46,7 @@ package MMU.Registers is
       DMG_Palette at 3 range 4 .. 4;
       X_Flip at 3 range 5 .. 5;
       Y_Flip at 3 range 6 .. 6;
-      Priority at 3 range 7 .. 7;
+      BG_Over_OBJ at 3 range 7 .. 7;
    end record;
 
    Sprite_Size : constant Addr16 := Sprite'Size / 8;
@@ -55,7 +55,7 @@ package MMU.Registers is
    Sprite_Count : constant Addr16 :=
       (OAM_Addr'Last - OAM_Addr'First + 1) / Sprite_Size;
 
-   type Sprite_Array is array (1 .. Sprite_Count) of Sprite;
+   type Sprite_Array is array (Addr16 range <>) of Sprite;
 
    function Get_Sprites (Mem : Memory_T) return Sprite_Array;
 
@@ -106,10 +106,22 @@ package MMU.Registers is
    end record;
 
    function BG_Tile_Map (LCDC : LCDC_T) return Addr16;
+   function Win_Tile_Map (LCDC : LCDC_T) return Addr16;
 
    subtype IO_Addr_Range is Addr16 range 16#FF00# .. 16#FF50#;
 
+   type Flags is (A_Right, B_Left, Select_Up, Start_Down, Select_Dpad,
+                  Select_Buttons, Void1, Void2);
+
+   --  Everything in JOYP_Array is inversed
+   --    0 means set
+   --    1 means unset
+   type JOYP_Array is array (Flags) of Boolean with Pack;
+
    JOYP_Addr : constant Addr16 := 16#FF00#;
+
+   function JOYP (Mem : Memory_T) return JOYP_Array;
+   procedure Set_JOYP (Mem : Memory_T; J : JOYP_Array);
 
    SB_Addr : constant Addr16 := 16#FF01#;
    SC_Addr : constant Addr16 := 16#FF02#;
@@ -128,8 +140,10 @@ package MMU.Registers is
    LYC_Addr : constant Addr16 := 16#FF45#;
    DMA_Addr : constant Addr16 := 16#FF46#;
    BGP_Addr : constant Addr16 := 16#FF47#;
-   OBP0_Addr : constant Addr16:= 16#FF48#;
-   OBP1_Addr : constant Addr16:= 16#FF49#;
+   OBP0_Addr : constant Addr16 := 16#FF48#;
+   OBP1_Addr : constant Addr16 := 16#FF49#;
+   WY_Addr : constant Addr16 := 16#FF4A#;
+   WX_Addr : constant Addr16 := 16#FF4B#;
    IE_Addr : constant Addr16 := 16#FFFF#;
 
    function LCDC (Mem : Memory_T) return LCDC_T;
@@ -139,6 +153,8 @@ package MMU.Registers is
    function LYC (Mem : Memory_T) return Uint8;
    function BGP (Mem : Memory_T) return Palette_T;
    function OBP (Mem : Memory_T; P : DMG_OBP_Palette) return Palette_T;
+   function WY (Mem : Memory_T) return Uint8;
+   function WX (Mem : Memory_T) return Uint8;
    function IFF (Mem : Memory_T) return Interrupt_Array;
    function IE (Mem : Memory_T) return Interrupt_Array;
    function STAT (Mem : Memory_T) return STAT_T;
