@@ -44,5 +44,6 @@ package GB is
    procedure Increment_Clocks (GB : in out GB_T; Amount : Clock_T := 1);
 
    procedure Init (GB : out GB_T);
+   procedure Load (GB : in out GB_T; Filename : String);
    procedure Finalize (GB : in out GB_T);
 end GB;

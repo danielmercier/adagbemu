@@ -1,5 +1,6 @@
 with HAL; use HAL;
 with MMU; use MMU;
+with Cartridge; use Cartridge;
 
 package CPU is
    type CPU_T is limited private;
@@ -99,6 +100,9 @@ package CPU is
 
    function Software_Breakpoint (CPU : in out CPU_T) return Boolean;
 
+   procedure Set_Cartridge (CPU : in out CPU_T; C : Cartridge_P);
+   procedure Finalize (CPU : in out CPU_T);
+
    Debug_Test_Mode : Boolean := False;
    --  Special mode for testing cpu (STOP instruction is the same as HALT and
    --  interrupts are not handled
@@ -133,6 +137,7 @@ private
       Program_Counter : Addr16;
 
       Memory : Memory_T;
+      Cartridge : Cartridge_P;
 
       --  Flag to say if interrupts are enabled or not
       Interrupt_Master_Enable : Boolean := False;

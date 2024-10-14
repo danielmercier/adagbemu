@@ -1,7 +1,5 @@
 with Ada.Streams.Stream_IO; use Ada.Streams.Stream_IO;
 
-with CPU; use CPU;
-
 package body Loader is
    procedure Load (Filename : String; GB : in out GB_T; Start : Addr16) is
       File : File_Type;

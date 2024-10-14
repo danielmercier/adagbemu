@@ -84,11 +84,21 @@ package body CPU is
 
    function Mem (CPU : CPU_T; A : Addr16) return Uint8 is
    begin
-      if CPU.Mem_Getter = null then
-         return CPU.Memory.Get (A);
-      else
+      if CPU.Mem_Getter /= null then
          return CPU.Mem_Getter (A);
       end if;
+
+      case A is
+         when 16#0000# .. 16#7FFF# | 16#A000# .. 16#BFFF# =>
+            --  Read from cartridge
+            if CPU.Cartridge /= null then
+               return Read (CPU.Cartridge.all, A);
+            end if;
+         when others =>
+            null;
+      end case;
+
+      return CPU.Memory.Get (A);
    end Mem;
 
    function Mem (CPU : CPU_T; P : Ptr16_T) return Uint8 is
@@ -110,9 +120,11 @@ package body CPU is
       end if;
 
       case A is
-         when 16#0000# .. 16#7FFF# =>
-            --  Do not write on cardbridge
-            return;
+         when 16#0000# .. 16#7FFF# | 16#A000# .. 16#BFFF# =>
+            --  Write on cartridge
+            if CPU.Cartridge /= null then
+               Write (CPU.Cartridge.all, A, V);
+            end if;
          when LY_Addr =>
             --  Read-only
             return;
@@ -334,4 +346,17 @@ package body CPU is
       --  see LD B, B as a breakpoint
       return Mem (CPU, Get_PC (CPU)) = 16#40#;
    end Software_Breakpoint;
+
+
+   procedure Set_Cartridge (CPU : in out CPU_T; C : Cartridge_P) is
+   begin
+      CPU.Cartridge := C;
+   end Set_Cartridge;
+
+   procedure Finalize (CPU : in out CPU_T) is
+   begin
+      if CPU.Cartridge /= null then
+         Free (CPU.Cartridge);
+      end if;
+   end Finalize;
 end CPU;

@@ -12,7 +12,6 @@ with HAL; use HAL;
 
 with PPU.Render;
 with Timer;
-with Loader; use Loader;
 with CPU; use CPU;
 with GB; use GB;
 with Decoder; use Decoder;
@@ -52,7 +51,7 @@ begin
    Init (GB);
 
    if Argument_Count >= 1 then
-      Load (Argument (1), GB, 16#0000#);
+      Load (GB, Argument (1));
    end if;
 
    if not SDL_Renderer.Init (Window, Renderer) then

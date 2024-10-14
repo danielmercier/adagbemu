@@ -1,10 +1,20 @@
 with Ada.Unchecked_Conversion;
+with Interfaces; use Interfaces;
 
 package HAL is
    --  8 bit unsigned
    type Uint8 is mod 2 ** 8 with Size => 8;
    --  16 bit unsigned
    type Uint16 is mod 2 ** 16 with Size => 16;
+
+   function Shift_Left (V : Uint8; Amount : Natural) return Uint8 is
+      (Uint8 (Shift_Left (Unsigned_8 (V), Amount)));
+   function Shift_Right (V : Uint8; Amount : Natural) return Uint8 is
+      (Uint8 (Shift_Right (Unsigned_8 (V), Amount)));
+   function Shift_Right (V : Uint16; Amount : Natural) return Uint16 is
+      (Uint16 (Shift_Right (Unsigned_16 (V), Amount)));
+   function Shift_Left (V : Uint16; Amount : Natural) return Uint16 is
+      (Uint16 (Shift_Left (Unsigned_16 (V), Amount)));
 
    --  8 bit signed
    type Int8 is range -2 ** 7 .. 2 ** 7 - 1 with Size => 8;

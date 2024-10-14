@@ -6,7 +6,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with MMU.Registers; use MMU.Registers;
 
-with Ada.Numerics.Discrete_Random;
+with Cartridge;
 
 package body GB is
    procedure Set_Never_Wait (GB : in out GB_T) is
@@ -52,8 +52,14 @@ package body GB is
    procedure Finalize (GB : in out GB_T) is
       procedure Free is new Ada.Unchecked_Deallocation (Memory_P, Memory_T);
    begin
+      Finalize (GB.CPU);
       Free (GB.Memory);
    end Finalize;
+
+   procedure Load (GB : in out GB_T; Filename : String) is
+   begin
+      Set_Cartridge (GB.CPU, Cartridge.Load (Filename));
+   end Load;
 
    protected body Clock_Waiter_T is
       procedure Increment (Amount : Clock_T) is
