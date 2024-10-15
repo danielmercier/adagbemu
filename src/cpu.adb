@@ -347,7 +347,6 @@ package body CPU is
       return Mem (CPU, Get_PC (CPU)) = 16#40#;
    end Software_Breakpoint;
 
-
    procedure Set_Cartridge (CPU : in out CPU_T; C : Cartridge_P) is
    begin
       CPU.Cartridge := C;

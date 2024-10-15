@@ -1,5 +1,3 @@
-with SDL.Video.Windows;
-with SDL.Video.Renderers;
 with SDL.Events; use SDL.Events;
 with SDL.Events.Events; use SDL.Events.Events;
 
@@ -18,9 +16,8 @@ procedure Test_Scroll is
    Period  : constant Time_Span := Milliseconds (1);
 
    --  reference to the application window
-   Window   : SDL.Video.Windows.Window;
-   Renderer : SDL.Video.Renderers.Renderer;
    Event : SDL.Events.Events.Events;
+   Render : SDL_Renderer.Render_T;
 
    GB : aliased GB_T;
 
@@ -87,13 +84,12 @@ procedure Test_Scroll is
 
    procedure Finalize is
    begin
-      Window.Finalize;
-      SDL.Finalise;
+      SDL_Renderer.Finalize (Render);
       Finalize (GB);
    end Finalize;
 begin
    Init (GB);
-   if not SDL_Renderer.Init (Window, Renderer) then
+   if not SDL_Renderer.Init (Render) then
       return;
    end if;
 
@@ -102,9 +98,7 @@ begin
    Next := Clock + Period;
 
    while not Finish loop
-      SDL_Renderer.Render (Renderer, GB);
-
-      Window.Update_Surface;
+      SDL_Renderer.Render (Render, GB);
 
       while SDL.Events.Events.Poll (Event) loop
          if Event.Common.Event_Type = SDL.Events.Quit then

@@ -95,7 +95,8 @@ package body PPU is
       (Sprites : Sprite_Array; LCDC : LCDC_T; Line : Screen_X)
       return Sprite_Array
    is
-      Result : Sprite_Array (1 .. 10); --  Max number of sprites
+      Max_In_Line : constant := 10;
+      Result : Sprite_Array (1 .. Max_In_Line); --  Max number of sprites
       Horizontal_Count : Addr16 := 0;
    begin
       for Sprite of Sprites loop
@@ -103,17 +104,16 @@ package body PPU is
             Tile_A_Y : constant Integer :=
                Integer (Line) - Integer (Sprite.Y_Position) + 16;
             Large : constant Boolean := LCDC (Obj_Size_8x16);
-            Tile_Size_Y : constant Uint8 :=
-               (if Large then Tile_Size_X * 2 else Tile_Size_X);
+            Size : constant Uint8 :=
+               (if Large then 2 * Tile_Size_Y else Tile_Size_Y);
          begin
-            --  check if X and Y are on the tile
-            if Tile_A_Y in 0 .. Integer (Tile_Size_Y) then
+            if Tile_A_Y in 0 .. Integer (Size) - 1 then
                Horizontal_Count := Horizontal_Count + 1;
                Result (Horizontal_Count) := Sprite;
             end if;
          end;
 
-         exit when Horizontal_Count >= 10;
+         exit when Horizontal_Count >= Max_In_Line;
       end loop;
 
       return Result (1 .. Horizontal_Count); -- Return actual size

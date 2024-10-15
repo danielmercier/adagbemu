@@ -1,3 +1,5 @@
+with Interfaces; use Interfaces;
+
 package body Cartridge.Test_Cartridge is
    --  Fill the ROM with /= data
    procedure Init_ROM (C : in out Cartridge_T) is
@@ -5,11 +7,11 @@ package body Cartridge.Test_Cartridge is
       for I in 0 .. C.Last_Rom_Addr loop
          --  7 first bits contain the bank number and last one depends on I
          declare
-            Bank_Number : constant Unsigned_32 := I / 16#4000#;
+            Bank_Number : constant Unsigned_32 := Unsigned_32 (I) / 16#4000#;
          begin
-            C.Rom (I) :=
-               Uint8 ((Shift_Left (I mod 16#02#, 7) or Bank_Number)
-                      and 16#FF#);
+            C.Rom (I) := Uint8 (
+               (Shift_Left (Unsigned_32 (I) mod 16#02#, 7) or Bank_Number)
+               and 16#FF#);
          end;
       end loop;
    end Init_ROM;
@@ -22,7 +24,7 @@ package body Cartridge.Test_Cartridge is
       for I in 16#0000# .. 16#3FFF# loop
          declare
             Actual : constant Uint8 := Read (C, Addr16 (I));
-            Expected : constant Uint8 := C.Rom (Unsigned_32 (I));
+            Expected : constant Uint8 := C.Rom (I);
          begin
             if Actual /= Expected then
                declare
@@ -38,7 +40,7 @@ package body Cartridge.Test_Cartridge is
    end Test_Cartridge_ROM;
 
    procedure Test_ROM (Bank_Size : Natural) is
-      C : Cartridge_T ((Unsigned_32 (Bank_Size) + 1) * 16#4000# - 1, 0);
+      C : Cartridge_T ((Bank_Size + 1) * 16#4000# - 1, 0);
    begin
       Init_ROM (C);
 
@@ -53,9 +55,9 @@ package body Cartridge.Test_Cartridge is
                Actual : constant Uint8 := Read (C, Addr16 (J));
                Expected : constant Uint8 :=
                   (if I = 0 then
-                     C.Rom (Unsigned_32 (J))
+                     C.Rom (J)
                    else
-                     C.Rom (Unsigned_32 (I * 16#4000# + (J - 16#4000#))));
+                     C.Rom (Natural (I * 16#4000# + (J - 16#4000#))));
             begin
                if Actual /= Expected then
                   declare
@@ -175,7 +177,7 @@ package body Cartridge.Test_Cartridge is
                         Unsigned_32 (I + 16#4000#));
                Actual : constant Uint8 := Read (C, Addr16 (Actual_Addr));
                Expected : constant Uint8 :=
-                     C.Rom (Unsigned_32 (Bank * 16#4000# + I));
+                     C.Rom (Natural (Bank * 16#4000# + I));
             begin
                if Actual /= Expected then
                   declare
@@ -209,11 +211,12 @@ package body Cartridge.Test_Cartridge is
          --  Set 9nth bit
          Write (C.all, 16#3000#, Uint8 (Shift_Right (Bank and 16#100#, 8)));
 
-         for I in 16#0000# .. Unsigned_32 (16#3FFF#) loop
+         for I in 16#0000# .. 16#3FFF# loop
             declare
-               Actual_Addr : constant Unsigned_32 := I + 16#4000#;
+               Actual_Addr : constant Natural := I + 16#4000#;
                Actual : constant Uint8 := Read (C.all, Addr16 (Actual_Addr));
-               Expected : constant Uint8 := C.Rom (Bank * 16#4000# + I);
+               Expected : constant Uint8 :=
+                  C.Rom (Natural (Bank) * 16#4000# + I);
             begin
                if Actual /= Expected then
                   declare
@@ -269,6 +272,83 @@ package body Cartridge.Test_Cartridge is
       end loop;
    end Test_MBC5;
 
+   procedure Test_MBC3 is
+      C : Cartridge_T (16#80# * 16#4000# - 1, 16#04# * 16#2000# - 1);
+   begin
+      C.Is_MBC3 := True;
+
+      Init_ROM (C);
+
+      for Bank in 0 .. Unsigned_32 (16#1F#) loop
+         --  Set 7 bits
+         Write (C, 16#2000#, Uint8 (Bank));
+
+         for I in 16#0000# .. 16#3FFF# loop
+            declare
+               Actual_Addr : constant Natural :=
+                  (if Bank = 0 then I else I + 16#4000#);
+               Actual : constant Uint8 := Read (C, Addr16 (Actual_Addr));
+               Expected : constant Uint8 :=
+                  C.Rom (Natural (Bank) * 16#4000# + I);
+            begin
+               if Actual /= Expected then
+                  declare
+                     Exn : constant String :=
+                        "Bank:" & Bank'Image & ", Address:" & I'Image & ", " &
+                        "Actual:" & Actual'Image & ", Expected:" &
+                        Expected'Image;
+                  begin
+                     raise Program_Error with Exn;
+                  end;
+               end if;
+            end;
+         end loop;
+      end loop;
+
+      --  Fill the RAM with /= data with Write
+      for Bank in 16#00# .. 16#03# loop
+         Write (C, 16#4000#, Uint8 (Bank));
+
+         for I in 16#A000# .. 16#BFFF# loop
+            Write (C, Addr16 (I),
+               Uint8 ((Shift_Left (Unsigned_32 (I) mod 16#40#, 16#02#)
+                        or Unsigned_32 (Bank))
+                      and 16#FF#));
+         end loop;
+      end loop;
+
+      for Bank in 16#00# .. 16#03# loop
+         --  Any bank always resolves to 16#A000# .. 16#BFFF# in non advanced
+         --  banking mode
+
+         Write (C, 16#4000#, Uint8 (Bank));
+
+         for I in 16#A000# .. 16#BFFF# loop
+            declare
+               Actual : constant Uint8 := Read (C, Addr16 (I));
+
+               --  Manually use the same expression as the one we wrote to
+               --  really test that writing to the RAM works
+               Expected : constant Uint8 :=
+                  Uint8 ((Shift_Left (Unsigned_32 (I) mod 16#40#, 16#02#)
+                           or Unsigned_32 (Bank))
+                         and 16#FF#);
+            begin
+               if Actual /= Expected then
+                  declare
+                     Exn : constant String :=
+                        "Bank:" & Bank'Image & ", Address:" & I'Image & ", " &
+                        "Actual:" & Actual'Image & ", Expected:" &
+                        Expected'Image;
+                  begin
+                     raise Program_Error with Exn;
+                  end;
+               end if;
+            end;
+         end loop;
+      end loop;
+   end Test_MBC3;
+
    procedure Run is
    begin
       Test_Cartridge_ROM;
@@ -281,6 +361,8 @@ package body Cartridge.Test_Cartridge is
       end loop;
 
       Test_RAM;
+
+      Test_MBC3;
 
       Test_MBC5;
    end Run;

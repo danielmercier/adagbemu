@@ -26,6 +26,9 @@ package PPU is
    Tile_Size_X : constant := 8;
    Tile_Size_Y : constant := 8;
 
+   --  Max number of sprites in a line
+   Max_Sprites_In_Line : constant := 10;
+
    --  Type for the X and Y of a pixel in one tile
    type Tile_Pixel_X is mod Tile_Size_X;
    type Tile_Pixel_Y is mod Tile_Size_Y;
@@ -93,6 +96,6 @@ private
    type State is record
       Current_Cycles : Clock_T := 0;
       Sprite_Count : Addr16 := 0;
-      Selected_Sprites : Sprite_Array (1 .. 10);
+      Selected_Sprites : Sprite_Array (1 .. Max_Sprites_In_Line);
    end record;
 end PPU;

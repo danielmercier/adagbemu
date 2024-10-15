@@ -74,7 +74,7 @@ package CPU is
    procedure Unset_Halt_Mode (CPU : in out CPU_T);
 
    procedure DMA_Update (CPU : in out CPU_T; Cycles : Clock_T);
-   DMA_Duration : constant Clock_T := 140;
+   DMA_Duration : constant Clock_T := 160;
 
    --  Return true if the last instruction made a conditional jump
    function Last_Branch_Taken (CPU : CPU_T) return Boolean;

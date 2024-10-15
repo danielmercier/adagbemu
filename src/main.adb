@@ -1,8 +1,7 @@
-with SDL.Video.Windows;
-with SDL.Video.Renderers;
 with SDL.Events; use SDL.Events;
 with SDL.Events.Events; use SDL.Events.Events;
 with SDL.Events.Keyboards; use SDL.Events.Keyboards;
+with SDL.Events.Windows; use SDL.Events.Windows;
 
 with SDL_Renderer;
 
@@ -21,21 +20,20 @@ with Ada.Command_Line; use Ada.Command_Line;
 
 procedure Main is
    --  reference to the application window
-   Window   : SDL.Video.Windows.Window;
-   Renderer : SDL.Video.Renderers.Renderer;
    Event : SDL.Events.Events.Events;
+   Render : SDL_Renderer.Render_T;
 
    Period : constant Time_Span := Milliseconds (16);
    Next : Time;
 
+   Pause : Boolean := False;
    Finish : Boolean := False;
 
    GB : aliased GB_T;
 
    procedure Finalize is
    begin
-      Window.Finalize;
-      SDL.Finalise;
+      SDL_Renderer.Finalize (Render);
       Finalize (GB);
    end Finalize;
 
@@ -54,7 +52,7 @@ begin
       Load (GB, Argument (1));
    end if;
 
-   if not SDL_Renderer.Init (Window, Renderer) then
+   if not SDL_Renderer.Init (Render, Render_VRAM => True) then
       Finalize;
 
       return;
@@ -63,14 +61,16 @@ begin
    Next := Clock + Period;
 
    while not Finish loop
-      SDL_Renderer.Render (Renderer, GB);
-
-      Window.Update_Surface;
+      SDL_Renderer.Render (Render, GB);
 
       while SDL.Events.Events.Poll (Event) loop
          case Event.Common.Event_Type is
             when SDL.Events.Quit =>
                Finish := True;
+            when SDL.Events.Windows.Window =>
+               if Event.Window.Event_ID = SDL.Events.Windows.Close then
+                  Finish := True;
+               end if;
             when SDL.Events.Keyboards.Key_Up | SDL.Events.Keyboards.Key_Down =>
                declare
                   Set : constant Boolean :=
@@ -97,6 +97,10 @@ begin
                         A := Set;
                      when SDL.Events.Keyboards.Code_O =>
                         B := Set;
+                     when SDL.Events.Keyboards.Code_Space =>
+                        if Set then
+                           Pause := not Pause;
+                        end if;
                      when others =>
                         null;
                   end case;
@@ -106,18 +110,20 @@ begin
          end case;
       end loop;
 
-      loop
-         Update (GB, Left, Right, Up, Down, A, B, Start, Selectt);
+      if not Pause then
+         loop
+            Update (GB, Left, Right, Up, Down, A, B, Start, Selectt);
 
-         declare
-            Cycles : constant Clock_T := Emulate_Cycle (GB);
-         begin
-            Timer.Update (GB, Cycles);
-            DMA_Update (GB.CPU, Cycles);
+            declare
+               Cycles : constant Clock_T := Emulate_Cycle (GB);
+            begin
+               Timer.Update (GB, Cycles);
+               DMA_Update (GB.CPU, Cycles);
 
-            exit when PPU.Render.Render (GB, Cycles);
-         end;
-      end loop;
+               exit when PPU.Render.Render (GB, Cycles);
+            end;
+         end loop;
+      end if;
 
       delay until Next;
       Next := Next + Period;

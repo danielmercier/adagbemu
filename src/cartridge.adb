@@ -14,12 +14,7 @@ package body Cartridge is
    function Load (Filename : String) return Cartridge_P is
       Last_Rom_Addr : constant File_Size := Size (Filename) - 1;
 
-      Result : constant Cartridge_P :=
-         new Cartridge_T'(
-            Last_Rom_Addr => Unsigned_32 (Last_Rom_Addr),
-            Last_Ram_Addr => 16#1FFF#,
-            others => <>
-         );
+      Rom : Memory_Array (0 .. Natural (Last_Rom_Addr));
 
       File : File_Type;
       Input_Stream : Stream_Access;
@@ -28,9 +23,9 @@ package body Cartridge is
       Open (File, In_File, Filename);
       Input_Stream := Stream (File);
 
-      for Addr in 0 .. Result.Last_Rom_Addr loop
+      for Addr in Rom'Range loop
          Uint8'Read (Input_Stream, Read_Byte);
-         Result.Rom (Addr) := Read_Byte;
+         Rom (Addr) := Read_Byte;
       end loop;
 
       if not End_Of_File (File) then
@@ -39,35 +34,71 @@ package body Cartridge is
 
       Close (File);
 
-      Result.Is_MBC5 := Result.Rom (16#147#) in 16#11# .. 16#1E#;
+      declare
+         Ram_Size : constant Natural :=
+            (case Rom (16#149#) is
+               when 16#00# | 16#01# =>
+                  0,
+               when 16#02# =>
+                  16#2000#, --  1 bank
+               when 16#03# =>
+                  4 * 16#2000#, --  4 banks
+               when 16#04# =>
+                  16 * 16#2000#, --  16 banks
+               when 16#05# =>
+                  8 * 16#2000#,
+               when others =>
+                  16#0000#); --  8 banks
 
-      return Result;
+         Result : constant Cartridge_P :=
+            new Cartridge_T'(
+               Last_Rom_Addr => Rom'Last,
+               Last_Ram_Addr => Ram_Size - 1,
+               Rom => Rom,
+               others => <>
+            );
+      begin
+         Result.Is_MBC3 := Rom (16#147#) in 16#0F# .. 16#13#;
+         Result.Is_MBC5 := Rom (16#147#) in 16#19# .. 16#1E#;
+
+         return Result;
+      end;
    end Load;
 
    --  Having a rom extension or not depends on the cartridge's rom size
    function ROM_Extension (C : Cartridge_T) return Boolean is
    begin
-      return C.Last_Rom_Addr > 16#7FFFF#;
+      return not C.Is_MBC3
+         and then not C.Is_MBC5
+         and then C.Last_Rom_Addr > 16#7FFFF#;
    end ROM_Extension;
 
    function Compute_RAM_Addr
       (C : Cartridge_T; Addr : Addr16)
-      return Unsigned_32
+      return Natural
    is
-      Actual_Ram_Bank : constant Unsigned_32 :=
+      Actual_Ram_Bank : constant Natural :=
          (if C.Is_MBC5 or else
+             C.Is_MBC3 or else
              (C.Advanced_Bank and then not ROM_Extension (C))
           then
-             Unsigned_32 (C.Ram_Bank)
+             Natural (C.Ram_Bank)
           else
              0);
-      Bank_Start : constant Unsigned_32 :=
+      Bank_Start : constant Natural :=
          16#2000# * Actual_Ram_Bank;
-      Offset_In_Bank : constant Unsigned_32 :=
-         Unsigned_32 (Addr) - 16#A000#;
+      Offset_In_Bank : constant Natural :=
+         Natural (Addr) - 16#A000#;
    begin
       return Bank_Start + Offset_In_Bank;
    end Compute_RAM_Addr;
+
+   function Read_RTC (RTC_Mode : RTC_Mode_T) return Uint8 is
+      pragma Unreferenced (RTC_Mode);
+   begin
+      --  TODO: really implement the clock
+      return 0;
+   end Read_RTC;
 
    function Read (C : Cartridge_T; Addr : Addr16) return Uint8 is
    begin
@@ -77,27 +108,31 @@ package body Cartridge is
             if ROM_Extension (C) and then C.Advanced_Bank then
                   --  Advanced banking mode selection
                declare
-                  Bank_Start : constant Unsigned_32 :=
-                     16#4000# * Unsigned_32 (C.Rom_Bank - 1);
+                  Bank_Start : constant Natural :=
+                     16#4000# * Natural (C.Rom_Bank - 1);
                begin
-                  return C.Rom (Bank_Start + Unsigned_32 (Addr));
+                  return C.Rom (Bank_Start + Natural (Addr));
                end;
             else
-               return C.Rom (Unsigned_32 (Addr));
+               return C.Rom (Natural (Addr));
             end if;
          when 16#4000# .. 16#7FFF# =>
             --  ROM Bank 01-7F read-only
             declare
-               Bank_Start : constant Unsigned_32 :=
-                  16#4000# * Unsigned_32 (C.Rom_Bank);
-               Offset_In_Bank : constant Unsigned_32 :=
-                  Unsigned_32 (Addr) - 16#4000#;
+               Bank_Start : constant Natural :=
+                  16#4000# * Natural (C.Rom_Bank);
+               Offset_In_Bank : constant Natural :=
+                  Natural (Addr) - 16#4000#;
             begin
                return C.Rom (Bank_Start + Offset_In_Bank);
             end;
          when 16#A000# .. 16#BFFF# =>
             --  Cartridges ram
-            return C.Ram (Compute_RAM_Addr (C, Addr));
+            if C.RTC_Mode = None then
+               return C.Ram (Compute_RAM_Addr (C, Addr));
+            else
+               return Read_RTC (RTC_Mode_T (C.RTC_Mode));
+            end if;
          when others =>
             raise Program_Error with "Unexpected read of cartridge";
       end case;
@@ -105,14 +140,16 @@ package body Cartridge is
 
    procedure Compute_Upper_Two_Bits (C : in out Cartridge_T) is
    begin
-      if not C.Is_MBC5 and then ROM_Extension (C) then
+      if ROM_Extension (C) then
          C.Rom_Bank := (C.Rom_Bank and 16#1F#) + Shift_Left (C.Ram_Bank, 5);
       end if;
    end Compute_Upper_Two_Bits;
 
    procedure Compute_ROM_Bank (C : in out Cartridge_T; Val : Uint8) is
+      Bank_Mask : constant Uint16 :=
+         (if C.Is_MBC3 then 16#7F# else 16#1F#);
       Bank_Selection : constant Uint16 :=
-         Uint16 (Val) and 16#1F#;
+         Uint16 (Val) and Bank_Mask;
       Bank_In_Cart : constant Uint16 :=
          Uint16 ((C.Last_Rom_Addr + 1) / 16#4000#);
    begin
@@ -147,6 +184,19 @@ package body Cartridge is
       end case;
    end Compute_MBC5_ROM_Bank;
 
+   procedure Write_RTC
+      (C : in out Cartridge_T;
+       RTC_Mode : RTC_Mode_T;
+       Val : Uint8)
+   is
+      pragma Unreferenced (C);
+      pragma Unreferenced (RTC_Mode);
+      pragma Unreferenced (Val);
+   begin
+      --  TODO: really implement the clock
+      null;
+   end Write_RTC;
+
    procedure Write (C : in out Cartridge_T; Addr : Addr16; Val : Uint8) is
    begin
       case Addr is
@@ -165,18 +215,32 @@ package body Cartridge is
                Compute_ROM_Bank (C, Val);
             end if;
          when 16#4000# .. 16#5FFF# =>
-            if C.Is_MBC5 then
+            if C.Is_MBC3 and then Val in RTC_Mode_T then
+               C.RTC_Mode := Val;
+            elsif C.Is_MBC5 then
                C.Ram_Bank := Uint16 (Val and 16#0F#);
             else
                C.Ram_Bank := Uint16 (Val and 16#03#);
                Compute_Upper_Two_Bits (C);
             end if;
          when 16#6000# .. 16#7FFF# =>
-            C.Advanced_Bank := (if (Val and 16#01#) /= 0 then True else False);
-            Compute_Upper_Two_Bits (C);
+            if C.Is_MBC3 then
+               --  TODO: Latch Clock Data
+               null;
+            elsif C.Is_MBC5 then
+               --  Nothing
+               null;
+            else
+               C.Advanced_Bank := (if (Val and 16#01#) /= 0 then True else False);
+               Compute_Upper_Two_Bits (C);
+            end if;
          when 16#A000# .. 16#BFFF# =>
             --  Cartridges ram
-            C.Ram (Compute_RAM_Addr (C, Addr)) := Val;
+            if C.RTC_Mode = None then
+               C.Ram (Compute_RAM_Addr (C, Addr)) := Val;
+            else
+               Write_RTC (C, RTC_Mode_T (C.RTC_Mode), Val);
+            end if;
          when others =>
             raise Program_Error with "Unexpected write on cartridge";
       end case;
