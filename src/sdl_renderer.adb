@@ -32,19 +32,11 @@ package body SDL_Renderer is
          return False;
       end if;
 
-      Create (Win      => R.Main_Window,
-              Title    => "GameBoy Emulator",
-              Position => SDL.Video.Windows.Centered_Window_Position,
-              Size     => SDL.Positive_Sizes'(Width, Height),
-              Flags    => Windows.Windowed or Windows.OpenGL);
-
-      Create (R.Main_Renderer, R.Main_Window.Get_Surface);
-
       R.Render_VRAM := Render_VRAM;
 
       if Render_VRAM then
          Create (Win      => R.VRAM_Window,
-                 Title    => "GameBoy Emulator",
+                 Title    => "VRAM Viewer",
                  Position => SDL.Video.Windows.Centered_Window_Position,
                  Size     =>
                     SDL.Positive_Sizes'(Tiles_Per_Line * Pixel_Size * 8,
@@ -53,7 +45,25 @@ package body SDL_Renderer is
                  Flags    => Windows.Windowed or Windows.OpenGL);
 
          Create (R.VRAM_Renderer, R.VRAM_Window.Get_Surface);
+
+         Create (Win      => R.Sprite_Window,
+                 Title    => "Sprite Viewer",
+                 Position => SDL.Video.Windows.Centered_Window_Position,
+                 Size     =>
+                    SDL.Positive_Sizes'(10 * 8 * Pixel_Size,
+                                        4 * 8 * Pixel_Size),
+                 Flags    => Windows.Windowed or Windows.OpenGL);
+
+         Create (R.Sprite_Renderer, R.Sprite_Window.Get_Surface);
       end if;
+
+      Create (Win      => R.Main_Window,
+              Title    => "GameBoy Emulator",
+              Position => SDL.Video.Windows.Centered_Window_Position,
+              Size     => SDL.Positive_Sizes'(Width, Height),
+              Flags    => Windows.Windowed or Windows.OpenGL);
+
+      Create (R.Main_Renderer, R.Main_Window.Get_Surface);
 
       return True;
    end Init;
@@ -74,44 +84,75 @@ package body SDL_Renderer is
       end case;
    end Palette;
 
+   procedure Render_Tile
+      (Renderer : in out SDL.Video.Renderers.Renderer;
+       GB : GB_T;
+       Tile_Start : Addr16;
+       NTile : Natural;
+       Tiles_Per_Line : Natural)
+   is
+      type Tile_T is array (0 .. 15) of Bitset;
+      Tile : Tile_T;
+      Pixel : Rectangle := (0, 0, Pixel_Size, Pixel_Size);
+   begin
+      for I in 0 .. 15 loop
+         Tile (I) := To_Bitset (Mem (GB.CPU, Tile_Start + Addr16 (I)));
+      end loop;
+
+      --  Render the 8x8 tile
+      for X in 0 .. 7 loop
+         for Y in 0 .. 7 loop
+            declare
+               Color : constant Pixel_Color :=
+                    Boolean'Pos (Tile (Y * 2) (Uint8 (7 - X))) * 2
+                  + Boolean'Pos (Tile (Y * 2 + 1) (Uint8 (7 - X)));
+            begin
+               Renderer.Set_Draw_Colour (Palette (Color));
+
+               Pixel.X := SDL.Coordinate ((NTile mod Tiles_Per_Line) * 8 * Pixel_Size + X * Pixel_Size);
+               Pixel.Y := SDL.Coordinate ((NTile / Tiles_Per_Line) * 8 * Pixel_Size + Y * Pixel_Size);
+
+               Renderer.Fill (Pixel);
+            end;
+         end loop;
+      end loop;
+   end Render_Tile;
+
    procedure VRAM_Render
       (Renderer : in out SDL.Video.Renderers.Renderer;
        GB : GB_T)
    is
       Addr : Addr16 := 16#8000#;
 
-      type Tile_T is array (0 .. 15) of Bitset;
-      Tile : Tile_T;
-      Pixel : Rectangle := (0, 0, Pixel_Size, Pixel_Size);
       NTile : Natural := 0;
    begin
       while Addr < 16#A000# loop
-         for I in 0 .. 15 loop
-            Tile (I) := To_Bitset (Mem (GB.CPU, Addr + Addr16 (I)));
-         end loop;
-
-         --  Render the 8x8 tile
-         for X in 0 .. 7 loop
-            for Y in 0 .. 7 loop
-               declare
-                  Color : constant Pixel_Color :=
-                       Boolean'Pos (Tile (Y * 2) (Uint8 (7 - X))) * 2
-                     + Boolean'Pos (Tile (Y * 2 + 1) (Uint8 (7 - X)));
-               begin
-                  Renderer.Set_Draw_Colour (Palette (Color));
-
-                  Pixel.X := SDL.Coordinate ((NTile mod Tiles_Per_Line) * 8 * Pixel_Size + X * Pixel_Size);
-                  Pixel.Y := SDL.Coordinate ((NTile / Tiles_Per_Line) * 8 * Pixel_Size + Y * Pixel_Size);
-
-                  Renderer.Fill (Pixel);
-               end;
-            end loop;
-         end loop;
+         Render_Tile (Renderer, GB, Addr, NTile, Tiles_Per_Line);
 
          Addr := Addr + 16; --  Each tile have 16 bytes
          NTile := NTile + 1;
       end loop;
    end VRAM_Render;
+
+   procedure Sprite_Render
+      (Renderer : in out SDL.Video.Renderers.Renderer;
+       GB : GB_T)
+   is
+      Sprites : constant Sprite_Array := Get_Sprites (GB.Memory);
+      Tiles_Per_Line : constant Natural := 10;
+      NTile : Natural := 0;
+   begin
+      for Sprite of Sprites loop
+         declare
+            Tile_Start : constant Addr16 :=
+               16#8000# + Addr16 (Sprite.Tile_Index) * 16;
+         begin
+            Render_Tile (Renderer, GB, Tile_Start, NTile, Tiles_Per_Line);
+         end;
+
+         NTile := NTile + 1;
+      end loop;
+   end Sprite_Render;
 
    procedure Render
       (R : in out Render_T; GB : GB_T)
@@ -137,6 +178,9 @@ package body SDL_Renderer is
       if R.Render_VRAM then
          VRAM_Render (R.VRAM_Renderer, GB);
          R.VRAM_Window.Update_Surface;
+
+         Sprite_Render (R.Sprite_Renderer, GB);
+         R.Sprite_Window.Update_Surface;
       end if;
    end Render;
 end SDL_Renderer;

@@ -28,5 +28,8 @@ private
       Render_VRAM : Boolean := False;
       VRAM_Window : Windows.Window;
       VRAM_Renderer : Renderers.Renderer;
+
+      Sprite_Window : Windows.Window;
+      Sprite_Renderer : Renderers.Renderer;
    end record;
 end SDL_Renderer;
