@@ -38,7 +38,7 @@ package body Cartridge is
          Ram_Size : constant Natural :=
             (case Rom (16#149#) is
                when 16#00# | 16#01# =>
-                  0,
+                  16#2000#,
                when 16#02# =>
                   16#2000#, --  1 bank
                when 16#03# =>
@@ -46,9 +46,9 @@ package body Cartridge is
                when 16#04# =>
                   16 * 16#2000#, --  16 banks
                when 16#05# =>
-                  8 * 16#2000#,
+                  8 * 16#2000#, --  8 banks
                when others =>
-                  16#0000#); --  8 banks
+                  16#2000#);
 
          Result : constant Cartridge_P :=
             new Cartridge_T'(
@@ -58,8 +58,14 @@ package body Cartridge is
                others => <>
             );
       begin
-         Result.Is_MBC3 := Rom (16#147#) in 16#0F# .. 16#13#;
-         Result.Is_MBC5 := Rom (16#147#) in 16#19# .. 16#1E#;
+         case Rom (16#147#) is
+            when 16#0F# .. 16#13# =>
+               Result.Is_MBC3 := True;
+            when 16#19# .. 16#1E# =>
+               Result.Is_MBC5 := True;
+            when others =>
+               null;
+         end case;
 
          return Result;
       end;
@@ -78,8 +84,8 @@ package body Cartridge is
       return Natural
    is
       Actual_Ram_Bank : constant Natural :=
-         (if C.Is_MBC5 or else
-             C.Is_MBC3 or else
+         (if C.Is_MBC3 or else
+             C.Is_MBC5 or else
              (C.Advanced_Bank and then not ROM_Extension (C))
           then
              Natural (C.Ram_Bank)
@@ -147,7 +153,7 @@ package body Cartridge is
 
    procedure Compute_ROM_Bank (C : in out Cartridge_T; Val : Uint8) is
       Bank_Mask : constant Uint16 :=
-         (if C.Is_MBC3 then 16#7F# else 16#1F#);
+         (if C.Is_MBC3 then 16#FF# else 16#1F#);
       Bank_Selection : constant Uint16 :=
          Uint16 (Val) and Bank_Mask;
       Bank_In_Cart : constant Uint16 :=
@@ -156,8 +162,12 @@ package body Cartridge is
       if Bank_Selection = 0 then
          C.Rom_Bank := 16#01#;
       else
-            --  Check number of banks in the cart
-         C.Rom_Bank := Bank_Selection mod Bank_In_Cart;
+         --  Check number of banks in the cart
+         if Bank_Selection >= Bank_In_Cart then
+            raise Program_Error with "Unsupported overflow access to ROM";
+         end if;
+
+         C.Rom_Bank := Bank_Selection;
       end if;
 
       --  Also check upper two bits
@@ -201,11 +211,19 @@ package body Cartridge is
    begin
       case Addr is
          when 16#0000# .. 16#1FFF# =>
-            if not C.Is_MBC5 and then (Val and 16#80#) /= 0 then
+            if not C.Is_MBC5
+               and then not C.Is_MBC3
+               and then (Val and 16#80#) /= 0
+            then
                --  MBC2 behaviour, switch bank
                Compute_ROM_Bank (C, Val);
             else
-               C.Ram_Enabled := (Val and 16#0A#) /= 0;
+               if (Val and 16#0A#) = 0 then
+                  C.Ram_Enabled := False;
+                  C.RTC_Mode := None;
+               else
+                  C.Ram_Enabled := True;
+               end if;
             end if;
          when 16#2000# .. 16#3FFF# =>
             if C.Is_MBC5 then
@@ -220,6 +238,7 @@ package body Cartridge is
             elsif C.Is_MBC5 then
                C.Ram_Bank := Uint16 (Val and 16#0F#);
             else
+               C.RTC_Mode := None;
                C.Ram_Bank := Uint16 (Val and 16#03#);
                Compute_Upper_Two_Bits (C);
             end if;
