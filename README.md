@@ -26,21 +26,7 @@ Then run the test_adagbemu binary to see if all tests passes
 
 ## State
 
-Neither the CPU nor the GPU are finished for now. Tasks for both of them do
-not exist yet. Some notes on the design, and things to be done:
-
-tasks:
- - CPU task
- - GPU task
- - Main task
-
-clock waiters:
- - one for the gpu
- - one for the cpu
- - Will_Wait sets clock to the given amount
- - Wait waits until clock is zero
- - Decrement instead of Increment (do not decrement lower than 0)
-
-Main task:
- - SDL rendering
- - Increment each clock waiters
+Simple cartridge are supported and some games already work. Remaining work:
+ - Emulation of sound
+ - Implement more cartridge
+ - Bugfix on existing cartridge (MB5 doesn't seem to work properly)
